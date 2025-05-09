@@ -3,6 +3,39 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+def dtw22(x, y, band_width):
+    """
+    Sakoe-Chiba Band Dynamic Time Warping (DTW)
+    
+    Parameters:
+    - x, y: 두 시계열 데이터 (1D numpy 배열)
+    - band_width: 사코에-치바 대역의 크기 (int)
+    
+    Returns:
+    - dtw_distance: DTW 거리 (동적 시간 왜곡 거리)
+    """
+
+    # 시계열 길이
+    n = len(x)
+    m = len(y)
+
+    # 동적 프로그래밍 테이블 생성 (비용 행렬)
+    dtw_matrix = np.inf * np.ones((n, m))
+    dtw_matrix[0, 0] = abs(x[0] - y[0])  # 첫 번째 원소의 차이
+
+    # DTW 알고리즘
+    for i in range(1, n):
+        for j in range(max(1, i - band_width), min(m, i + band_width + 1)):
+            cost = abs(x[i] - y[j])
+            # 동적 프로그래밍 비용 계산
+            dtw_matrix[i, j] = cost + min(dtw_matrix[i - 1, j], dtw_matrix[i, j - 1], dtw_matrix[i - 1, j - 1])
+
+    # DTW 거리 (최종 위치의 값)
+    dtw_distance = dtw_matrix[n - 1, m - 1]
+
+    return dtw_distance
+
+
 def dtw(x, y, band_width):
     n = len(x)
     m = len(y)
