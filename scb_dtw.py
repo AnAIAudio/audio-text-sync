@@ -43,27 +43,28 @@ def dtw(x, y, band_width):
     return dtw_matrix, path
 
 
-# 예시 시계열
-x = np.array([1, 2, 3, 4, 5])
-y = np.array([2, 2, 3, 4, 5])
+def run_dtw():
+    # 예시 시계열
+    x = np.array([1, 2, 3, 4, 5])
+    y = np.array([2, 2, 3, 4, 5])
 
-# 대역 크기 설정
-band_width = 1
+    # 대역 크기 설정
+    band_width = 1
 
-# DTW 계산
-dtw_matrix, path = dtw(x, y, band_width)
+    # DTW 계산
+    dtw_matrix, path = dtw(x, y, band_width)
 
-# 시각화
-plt.figure(figsize=(10, 6))
+    # 시각화
+    plt.figure(figsize=(10, 6))
 
-# DTW 비용 행렬 시각화
-sns.heatmap(dtw_matrix, cmap="YlGnBu", cbar=True)
-plt.title("DTW Distance Matrix with Sakoe-Chiba Band")
-plt.xlabel("y (series 2)")
-plt.ylabel("x (series 1)")
+    # DTW 비용 행렬 시각화
+    sns.heatmap(dtw_matrix, cmap="YlGnBu", cbar=True)
+    plt.title("DTW Distance Matrix with Sakoe-Chiba Band")
+    plt.xlabel("y (series 2)")
+    plt.ylabel("x (series 1)")
 
-# 최적 경로 시각화
-for i, j in path:
-    plt.plot(j, i, marker="o", color="red", markersize=3)
+    # 최적 경로 시각화
+    for i, j in path:
+        plt.plot(j, i, marker="o", color="red", markersize=3)
 
-plt.show()
+    plt.show()
