@@ -82,6 +82,7 @@ def audio_text_mapping():
     import numpy as np
     import librosa
     from scipy.spatial.distance import cdist
+    import json
     import matplotlib.pyplot as plt
 
     # 1. 오디오 파일에서 MFCC 추출
@@ -105,7 +106,7 @@ def audio_text_mapping():
             sentence = sentence.strip()
             if sentence:
                 end_time = start_time + len(sentence) * 0.1  # 간단한 예시: 문자 수에 비례하여 시간 배정
-                timestamps.append((start_time, end_time, sentence))
+                timestamps.append({"sentence": sentence, "start_time": start_time, "end_time": end_time})
                 start_time = end_time
         return timestamps
 
@@ -125,7 +126,8 @@ def audio_text_mapping():
         # 거리 계산 (오디오 프레임과 단어 간의 유사도 계산)
         for i in range(num_frames):
             for j in range(num_words):
-                start_time, end_time, _ = words_timestamps[j]
+                start_time, end_time, _ = words_timestamps[j]["start_time"], words_timestamps[j]["end_time"], \
+                    words_timestamps[j]["sentence"]
                 word_mfcc = mfcc_audio[i]  # 오디오 프레임의 MFCC 벡터
                 # 단어의 시간 범위에 해당하는 평균 MFCC를 계산 (여기서는 단순화)
                 word_mfcc_mean = np.mean(mfcc_audio[int(start_time):int(end_time)], axis=0) if int(
@@ -152,7 +154,16 @@ def audio_text_mapping():
                 min_cost = min(dtw_matrix[i - 1, j], dtw_matrix[i, j - 1], dtw_matrix[i - 1, j - 1])
                 dtw_matrix[i, j] += min_cost
 
-        return dtw_matrix[-1, -1]  # 최단 거리 반환
+        # 동기화된 타임스탬프 생성
+        result = []
+        for j in range(num_words):
+            sentence = words_timestamps[j]["sentence"]
+            start_time = words_timestamps[j]["start_time"]
+            end_time = words_timestamps[j]["end_time"]
+            result.append({"sentence": sentence, "start_time": start_time, "end_time": end_time})
+
+        # JSON 형식으로 출력
+        return json.dumps(result, indent=4)
 
     # 4. 예시 데이터 (오디오 파일 경로와 텍스트 준비)
     audio_path = 'your_audio_file.wav'
@@ -164,6 +175,6 @@ def audio_text_mapping():
     # 텍스트와 타임스탬프 준비
     words_timestamps = prepare_text_timestamps(text)
 
-    # DTW 거리 계산
-    distance = dtw_distance(mfcc_audio, words_timestamps)
-    print("최단 DTW 거리:", distance)
+    # DTW 거리 계산 후 동기화된 타임스탬프 JSON 생성
+    synchronized_json = dtw_distance(mfcc_audio, words_timestamps)
+    print(synchronized_json)
