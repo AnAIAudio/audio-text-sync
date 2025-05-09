@@ -3,3 +3,7 @@ numpy
 matplotlib
 seaborn
 black
+torch
+torchaudio
+transformers
+sentence-transformers
