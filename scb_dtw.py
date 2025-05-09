@@ -11,13 +11,14 @@ def sakoe_chiba_dtw(x, y, band_width):
     n = len(x)
     m = len(y)
 
+    # 비용 행렬 초기화: 0으로 설정하지 않도록 최소값을 추가 (예: 1e-6)
     dtw_matrix = np.inf * np.ones((n, m))
-    dtw_matrix[0, 0] = abs(x[0] - y[0])  # 첫 번째 원소의 차이
+    dtw_matrix[0, 0] = abs(x[0] - y[0]) + 1e-6  # 작은 값 추가
 
     # 동적 프로그래밍 계산 (사코에-치바 대역 적용)
     for i in range(1, n):
         for j in range(max(1, i - band_width), min(m, i + band_width + 1)):
-            cost = abs(x[i] - y[j])
+            cost = abs(x[i] - y[j]) + 1e-6  # 작은 값 추가
             dtw_matrix[i, j] = cost + min(dtw_matrix[i - 1, j], dtw_matrix[i, j - 1], dtw_matrix[i - 1, j - 1])
 
     # 최적 경로 추적
