@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from audio.audio_util import change_audio_1st_dimension
+from text.text_util import change_text_1st_dimension
+
 
 def dtw22(x, y, band_width):
     """
@@ -76,10 +79,12 @@ def dtw(x, y, band_width):
     return dtw_matrix, path
 
 
-def run_dtw():
+def run_dtw(audio_file_path, text_file_path: str):
     # 예시 시계열
-    x = np.array([1, 2, 3, 4, 5])
-    y = np.array([2, 2, 3, 4, 5])
+    x = change_text_1st_dimension(text_file_path=text_file_path)
+    y = change_audio_1st_dimension(audio_file_path=audio_file_path)
+    # x = np.array([1, 2, 3, 4, 5])
+    # y = np.array([2, 2, 3, 4, 5])
 
     # 대역 크기 설정
     band_width = 1
