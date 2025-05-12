@@ -41,7 +41,23 @@ def run_wave2vec(audio_file_path: str):
     # 임베딩 추출
     with torch.no_grad():
         embeddings = model(input_values).last_hidden_state.squeeze(0)  # (T, D)
+        embeddings = embeddings.cpu().numpy()  # ← 명시적으로 NumPy로 변환
+
+    embeddings = downsample_embeddings(embeddings, factor=5)
 
     print(embeddings.shape)  # 예: (500, 768)
 
     return embeddings
+
+
+# 3. Downsampling (오디오 임베딩)
+def downsample_embeddings(embeds, factor=5):
+    import numpy as np
+
+    return np.array(
+        [
+            np.mean(embeds[i : i + factor], axis=0)
+            for i in range(0, len(embeds), factor)
+            if len(embeds[i : i + factor]) == factor
+        ]
+    )

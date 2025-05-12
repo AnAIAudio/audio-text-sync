@@ -1,5 +1,6 @@
 from datetime import datetime
 import torch
+from sklearn.preprocessing import normalize
 from audio.wave_to_vector import run_wave2vec
 from compare import compare_dtw, map_time_code
 from text.bert import run_bert
@@ -24,8 +25,8 @@ if __name__ == "__main__":
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
 
-    audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3_2.mp3")
-    text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt_2.txt")
+    audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3.mp3")
+    text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt.txt")
 
     torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -36,9 +37,14 @@ if __name__ == "__main__":
     with open(text_file_path, "r") as f:
         text_data = f.readlines()
 
-    ss = run_bert(text_data=text_data)
-    zz = run_wave2vec(audio_file_path=audio_file_path)
-    gg = compare_dtw(ss, zz)
+    text_bert = run_bert(text_data=text_data)
+    audio_vector = run_wave2vec(audio_file_path=audio_file_path)
+
+    # 4. 정규화 (unit vector로 만들기)
+    text_embeds = normalize(text_bert)
+    audio_embeds = normalize(audio_vector)
+
+    gg = compare_dtw(text_embeds, audio_embeds)
 
     now = datetime.now()
     formatted = now.strftime("%Y%m%d%H%M%S")
