@@ -1,3 +1,13 @@
+def seconds_to_srt_time(seconds):
+    import datetime
+
+    td = datetime.timedelta(seconds=seconds)
+    s = str(td)[:-3] if "." in str(td) else str(td) + ".000"
+    if len(s.split(":")[0]) == 1:
+        s = "0" + s
+    return s.replace(".", ",")
+
+
 def compare_dtw(text_embeds, audio_embeds):
     from dtw import dtw
     from scipy.spatial.distance import cosine
@@ -13,14 +23,6 @@ def compare_dtw(text_embeds, audio_embeds):
 
 
 def map_time_code(sentences: list[str], alignment, srt_file_path: str):
-    import datetime
-
-    def seconds_to_srt_time(seconds):
-        td = datetime.timedelta(seconds=seconds)
-        s = str(td)[:-3] if "." in str(td) else str(td) + ".000"
-        if len(s.split(":")[0]) == 1:
-            s = "0" + s
-        return s.replace(".", ",")
 
     # 1. 문장 개수
     n_sentences = len(sentences)
@@ -71,6 +73,35 @@ def map_time_code(sentences: list[str], alignment, srt_file_path: str):
         print()
 
 
-def test_srt():
+def run_to_srt(tokens, mapping, srt_file_path: str):
+    import datetime
 
-    print("✅ SRT 파일이 'output.srt'로 저장되었습니다.")
+    # === Step 4. 각 토큰별 시간 추정 ===
+    # 시간 변환 함수
+
+    # 토큰별 오디오 프레임 매핑
+    token_frames = {i: [] for i in range(len(tokens))}
+    for i, j in mapping:
+        token_frames[i].append(j)
+
+    # SRT용 타임 코드 추정
+    srt_entries = []
+    for idx in range(len(tokens)):
+        frames = token_frames[idx]
+        if not frames:
+            continue
+        start_time = min(frames) * 0.02
+        end_time = max(frames) * 0.02 + 0.3  # 끝은 약간 여유
+        srt_entries.append(
+            (
+                idx + 1,
+                seconds_to_srt_time(start_time),
+                seconds_to_srt_time(end_time),
+                tokens[idx],
+            )
+        )
+
+    # === Step 5. SRT 저장 ===
+    with open(srt_file_path, "w", encoding="utf-8") as f:
+        for num, start, end, word in srt_entries:
+            f.write(f"{num}\n{start} --> {end}\n{word}\n\n")

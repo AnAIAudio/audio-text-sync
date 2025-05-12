@@ -5,11 +5,10 @@ def run_wave2vec(audio_file_path: str):
     if not os.path.exists(audio_file_path):
         raise FileNotFoundError(f"Audio file not found: {audio_file_path}")
 
-    # pip install torchaudio transformers
-
     import torch
     import torchaudio
     from transformers import Wav2Vec2Model, Wav2Vec2Processor
+    from sklearn.preprocessing import normalize
 
     # 모델 로딩
     processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
@@ -45,9 +44,12 @@ def run_wave2vec(audio_file_path: str):
 
     embeddings = downsample_embeddings(embeddings, factor=5)
 
+    print("Embeddings shape:")
     print(embeddings.shape)  # 예: (500, 768)
 
-    return embeddings
+    audio_seq = normalize(embeddings)
+
+    return audio_seq
 
 
 # 3. Downsampling (오디오 임베딩)
