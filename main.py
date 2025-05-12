@@ -1,3 +1,4 @@
+from datetime import datetime
 import torch
 from audio.wave_to_vector import run_wave2vec
 from compare import compare_dtw, map_time_code
@@ -10,15 +11,13 @@ if __name__ == "__main__":
     TEMP_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "temp")
     AUDIO_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "audio")
     TEXT_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "text")
+    SRT_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "srt")
 
-    if not os.path.exists(TEMP_DIRECTORY_PATH):
-        os.makedirs(TEMP_DIRECTORY_PATH, exist_ok=True)
+    path_list = [AUDIO_DIRECTORY_PATH, TEXT_DIRECTORY_PATH, SRT_DIRECTORY_PATH]
 
-    if not os.path.exists(AUDIO_DIRECTORY_PATH):
-        os.makedirs(AUDIO_DIRECTORY_PATH, exist_ok=True)
-
-    if not os.path.exists(TEXT_DIRECTORY_PATH):
-        os.makedirs(TEXT_DIRECTORY_PATH, exist_ok=True)
+    for path in path_list:
+        if not os.path.exists(path):
+            os.makedirs(TEMP_DIRECTORY_PATH, exist_ok=True)
 
     audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3.mp3")
     text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt.txt")
@@ -35,4 +34,13 @@ if __name__ == "__main__":
     ss = run_bert(text_data=text_data)
     zz = run_wave2vec(audio_file_path=audio_file_path)
     gg = compare_dtw(ss, zz)
-    map_time_code(sentences=text_data, alignment=gg)
+
+    now = datetime.now()
+    formatted = now.strftime("%Y%m%d%H%M%S")
+    srt_file_path = os.path.join(SRT_DIRECTORY_PATH, "voix_result_srt.srt")
+
+    map_time_code(
+        sentences=text_data,
+        alignment=gg,
+        srt_file_path=srt_file_path,
+    )
