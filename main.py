@@ -5,43 +5,32 @@ from audio.wave_to_vector import run_wave2vec
 from compare import compare_dtw, map_time_code, seconds_to_srt_time
 from text.bert import run_bert
 from text.word_bert import run_visualize, run_word_bert
+from utils.prepare import (
+    prepare_directories,
+    test_file_paths,
+    read_text_files,
+)
 
 if __name__ == "__main__":
-    import os
-    from custom_path import MAIN_BASE_PATH
-
-    TEMP_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "temp")
-    AUDIO_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "audio")
-    TEXT_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "text")
-    SRT_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "srt")
-
-    path_list = [
-        TEMP_DIRECTORY_PATH,
-        AUDIO_DIRECTORY_PATH,
-        TEXT_DIRECTORY_PATH,
-        SRT_DIRECTORY_PATH,
-    ]
-
-    for path in path_list:
-        if not os.path.exists(path):
-            os.makedirs(path, exist_ok=True)
-
-    audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3.mp3")
-    text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt.txt")
-    now = datetime.now()
-    formatted = now.strftime("%Y%m%d%H%M%S")
-    srt_file_path = os.path.join(SRT_DIRECTORY_PATH, f"voix_result_srt_{formatted}.srt")
-
     torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    (
+        temp_directory_path,
+        audio_directory_path,
+        text_directory_path,
+        srt_directory_path,
+    ) = prepare_directories()
+    audio_file_path, text_file_path, srt_file_path = test_file_paths(
+        audio_directory_path,
+        text_directory_path,
+        srt_directory_path,
+    )
 
-    # 2. 문장 리스트 준비 (시계열 순서대로 정렬된 문장들)
-    with open(text_file_path, "r") as f:
-        text_data = f.readlines()
+    text_list, full_text = read_text_files(text_file_path=text_file_path)
 
     # text_bert = run_bert(text_data=text_data)
     tokens, token_embeddings, token_sentence_ids = run_word_bert(
-        sentences=text_data,
-        full_text="\n".join(text_data),
+        sentences=text_list,
+        full_text=full_text,
     )
     audio_embeddings = run_wave2vec(audio_file_path=audio_file_path)
 
