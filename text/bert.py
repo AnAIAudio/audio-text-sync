@@ -1,10 +1,4 @@
-import os
-
-
-def run_bert(text_file_path: str):
-    if not os.path.exists(text_file_path):
-        raise FileNotFoundError(f"Text file not found: {text_file_path}")
-
+def run_bert(text_data: list[str]):
     # 설치 필요 (최초 1회만)
     # pip install sentence-transformers
 
@@ -13,17 +7,6 @@ def run_bert(text_file_path: str):
 
     # 1. BERT 모델 불러오기 (빠르고 가벼운 모델 사용)
     model = SentenceTransformer('all-MiniLM-L6-v2')
-
-    # 2. 문장 리스트 준비 (시계열 순서대로 정렬된 문장들)
-    text_data = [
-        "나는 커피를 좋아해.",
-        "아침마다 커피를 마신다.",
-        "오늘은 날씨가 흐리다.",
-        "카페에 앉아 책을 읽고 있다."
-    ]
-
-    with open(text_file_path, "r") as f:
-        text_data = f.readlines()
 
     # 3. 문장 → BERT 임베딩 (각 문장은 하나의 시점)
     sentence_embeddings = model.encode(text_data)
