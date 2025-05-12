@@ -13,11 +13,15 @@ def run_dtw_to_srt(
     n_sentences = len(sentences)
 
     # 2. 문장별로 매핑된 오디오 프레임들 추출
-    duration = waveform.shape[-1] / sample_rate  # 전체 길이(초)
-    hidden_len = audio_embedding.shape[0]  # Wav2Vec2 프레임 수
-    true_stride = duration / hidden_len  # ✓ 보정된 stride
+    # duration = waveform.shape[-1] / sample_rate  # 전체 길이(초)
+    # hidden_len = audio_embedding.shape[0]  # Wav2Vec2 프레임 수
+    # true_stride = duration / hidden_len  # ✓ 보정된 stride
     # frame_to_time = lambda idx: idx * 0.02  # 20ms per frame (Wav2Vec2 default stride)
-    frame_to_time = lambda idx: idx * true_stride
+    # frame_to_time = lambda idx: idx * true_stride
+
+    duration = waveform.shape[-1] / sample_rate
+    hidden_len = audio_embedding.shape[0]
+    stride = duration / hidden_len  # 반드시 실측으로 구하기
 
     # DTW 매핑 후
     mapped_frames_per_sentence = [[] for _ in range(n_sentences)]
@@ -29,8 +33,8 @@ def run_dtw_to_srt(
         if not frames:
             continue
         ss, ee = np.percentile(frames, [10, 90])  # ③ 꼬리 자르기
-        start_sec = ss * true_stride
-        end_sec = ee * true_stride
+        start_sec = ss * stride
+        end_sec = ee * stride
         # 최소 길이 보장 & 앞뒤 겹침 방지 루틴 ...
         sentence_times.append((start_sec, end_sec))
 

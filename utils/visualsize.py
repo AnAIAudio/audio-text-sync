@@ -50,33 +50,58 @@ def visualize(audio_path, correct_srt_path, created_srt_path):
 
     # ─── 2) 예측 바 ───
     for start, end, txt in pred_segments:
+        # ax.add_patch(
+        #     plt.Rectangle(
+        #         (start, 0),
+        #         end - start,
+        #         S_dB.shape[0],
+        #         facecolor="none",
+        #         edgecolor="cyan",
+        #         linewidth=2,
+        #         label="Predicted" if txt == pred_segments[0][2] else "",
+        #     )
+        # )
+
+        mel_bins = S_dB.shape[0]  # y축이 mel-bin index
         ax.add_patch(
             plt.Rectangle(
                 (start, 0),
                 end - start,
-                S_dB.shape[0],
+                mel_bins,
                 facecolor="none",
                 edgecolor="cyan",
                 linewidth=2,
-                label="Predicted" if txt == pred_segments[0][2] else "",
             )
         )
         ax.text(start, S_dB.shape[0] + 2, txt, color="cyan", fontsize=9)
 
     # ─── 3) (옵션) 정답 바 ───
     for start, end, txt in gt_segments:
+        # ax.add_patch(
+        #     plt.Rectangle(
+        #         (start, 0),
+        #         end - start,
+        #         S_dB.shape[0],
+        #         facecolor="none",
+        #         edgecolor="lime",
+        #         linestyle="--",
+        #         linewidth=2,
+        #         label="Ground Truth" if txt == gt_segments[0][2] else "",
+        #     )
+        # )
+
+        mel_bins = S_dB.shape[0]  # y축이 mel-bin index
         ax.add_patch(
             plt.Rectangle(
                 (start, 0),
                 end - start,
-                S_dB.shape[0],
+                mel_bins,
                 facecolor="none",
-                edgecolor="lime",
-                linestyle="--",
+                edgecolor="cyan",
                 linewidth=2,
-                label="Ground Truth" if txt == gt_segments[0][2] else "",
             )
         )
+        ax.text(start, S_dB.shape[0] + 2, txt, color="cyan", fontsize=9)
 
     # ─── 4) DTW Cost Matrix 하단 인셋 ───
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
