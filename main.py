@@ -12,6 +12,7 @@ from utils.prepare import (
     test_file_paths,
     read_text_files,
 )
+from utils.visualsize import visualize
 
 if __name__ == "__main__":
     torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -49,4 +50,10 @@ if __name__ == "__main__":
         waveform=waveform,
         sample_rate=sample_rate,
         audio_embedding=audio_embedding,
+    )
+
+    visualize(
+        audio_path=audio_file_path,
+        correct_srt_path=correct_srt_file_path,
+        created_srt_path=srt_file_path,
     )

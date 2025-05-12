@@ -35,8 +35,10 @@ def test_file_paths(audio_directory_path, text_directory_path, srt_directory_pat
     text_file_path = os.path.join(text_directory_path, "voix_result_txt.txt")
     now = datetime.now()
     formatted = now.strftime("%Y%m%d%H%M%S")
-    srt_file_path = os.path.join(srt_directory_path, f"voix_result_srt_{formatted}.srt_utils")
-    correct_srt_file_path = os.path.join(srt_directory_path, "correct_srt.srt_utils")
+    srt_file_path = os.path.join(
+        srt_directory_path, f"voix_result_srt_{formatted}.srt"
+    )
+    correct_srt_file_path = os.path.join(srt_directory_path, "correct_srt.srt")
 
     return audio_file_path, text_file_path, srt_file_path, correct_srt_file_path
 
