@@ -15,3 +15,5 @@ def run_sentence_bert(text_list: list[str]):
 
     print(time_series.shape)  # 예: (4, 384) → 문장 4개, 각 벡터 384차원
     print(time_series[0])  # 첫 문장의 벡터
+
+    return time_series
