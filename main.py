@@ -24,8 +24,8 @@ if __name__ == "__main__":
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
 
-    audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3.mp3")
-    text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt.txt")
+    audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3_2.mp3")
+    text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt_2.txt")
 
     torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
