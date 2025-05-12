@@ -1,4 +1,10 @@
-def run_wave2vec():
+import os
+
+
+def run_wave2vec(audio_file_path: str):
+    if not os.path.exists(audio_file_path):
+        raise FileNotFoundError(f"Audio file not found: {audio_file_path}")
+
     # pip install torchaudio transformers
 
     import torch
@@ -10,7 +16,7 @@ def run_wave2vec():
     model = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
 
     # 오디오 로드 (16kHz mono)
-    waveform, sample_rate = torchaudio.load("your_audio.wav")
+    waveform, sample_rate = torchaudio.load(audio_file_path)
     waveform = waveform.squeeze()  # (1, T) → (T,)
     if sample_rate != 16000:
         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
@@ -24,3 +30,5 @@ def run_wave2vec():
         embeddings = model(input_values).last_hidden_state.squeeze(0)  # (T, D)
 
     print(embeddings.shape)  # 예: (500, 768)
+
+    return embeddings

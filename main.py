@@ -1,4 +1,7 @@
 from audio.mfcc import run_mfcc
+from audio.wave_to_vector import run_wave2vec
+from compare import compare_dtw
+from text.bert import run_bert
 from text.tdf import run_tdf
 
 if __name__ == "__main__":
@@ -23,6 +26,10 @@ if __name__ == "__main__":
     text_file_path = os.path.join(TEXT_DIRECTORY_PATH, 'voix_result_txt.txt')
 
     # run_mfcc(audio_file_path=audio_file_path)
-    run_tdf(text_file_path=text_file_path)
+    # run_tdf(text_file_path=text_file_path)
+    ss = run_bert(text_file_path=text_file_path)
+    zz = run_wave2vec(audio_file_path=audio_file_path)
+
+    gg = compare_dtw(ss, zz)
 
     # run_dtw(audio_file_path=audio_file_path, text_file_path=text_file_path)
