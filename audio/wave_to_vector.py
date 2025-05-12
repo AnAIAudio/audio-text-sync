@@ -45,12 +45,12 @@ def run_wave2vec(audio_file_path: str):
 
     embeddings = downsample_embeddings(embeddings, factor=5)
 
-    print("Embeddings shape:")
-    print(embeddings.shape)  # 예: (500, 768)
+    # embeddings = normalize(embeddings)
 
-    audio_embedding = normalize(embeddings)
+    # 예: (500, 768)
+    print("Audio embeddings shape : ", embeddings.shape)
 
-    return audio_embedding
+    return embeddings
 
 
 # 3. Downsampling (오디오 임베딩)

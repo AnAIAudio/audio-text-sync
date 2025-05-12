@@ -36,4 +36,4 @@ def create_text_line_full_text(raw_text: str, lang_code: str = "en"):
         if line.strip():  # 빈 줄 건너뛰기
             sentences.extend(split_sentences(line, lang_code))
 
-    return "".join(sentences)
+    return sentences
