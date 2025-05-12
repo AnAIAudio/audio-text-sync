@@ -17,111 +17,101 @@ def read_srt(path):
     return segments
 
 
-def visualize(audio_path, correct_srt_path, created_srt_path):
-    import librosa, librosa.display
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import pandas as pd
+def visualize(alignment, audio_path, correct_srt_path, created_srt_path):
+    # 설치: pip install librosa matplotlib pandas srt dtw-python transformers torchaudio scikit-learn
+    import librosa, librosa.display, matplotlib.pyplot as plt
+    import numpy as np, pandas as pd, srt, datetime
+    from pathlib import Path
 
-    wav, sr = librosa.load(audio_path, sr=16000)
-    duration = len(wav) / sr
+    # ────────────────────────────── 0. 입 력 ──────────────────────────────
+    wav_path = audio_path  # 16 kHz mono
+    pred_srt = created_srt_path  # 예측
+    gt_srt = correct_srt_path  # (선택) 정답 SRT
 
-    # ===== ⓵ 예측 자막(TSV나 SRT 파싱) =====
-    pred_segments = read_srt(created_srt_path)  # 예측 자막
+    # DTW 결과 (alignment) 는 앞 단계에서 이미 계산했다고 가정
+    # alignment.costMatrix, alignment.index1, alignment.index2, text_len, audio_len  제공
+    # ─────────────────────────────────────────────────────────────────────
 
-    # ===== ⓶ (선택) 정답 자막 =====
-    gt_segments = read_srt(correct_srt_path)  # (선택) 정답 자막
-
-    # ===== ⓷ 스펙트럼 계산 =====
+    # 1) wav 로드 및 Mel-스펙트럼
+    wav, sr = librosa.load(wav_path, sr=16000, mono=True)
     S = librosa.feature.melspectrogram(
         y=wav, sr=sr, n_fft=1024, hop_length=320, n_mels=64
     )
     S_dB = librosa.power_to_db(S, ref=np.max)
     times = np.arange(S_dB.shape[1]) * (320 / sr)  # hop_length / sr
 
+    # 2) stride - 실측 기반 재계산 ①
+    duration = len(wav) / sr
+    hidden_len = (
+        alignment.costMatrix.shape[1] - 1
+    )  # padding 열 제외 (=오디오 프레임 수)
+    stride = duration / hidden_len
+
+    pred_segments = read_srt(pred_srt)
+    gt_segments = read_srt(gt_srt)  # 주석 처리하면 정답 없이 작동
+
+    # ─────────────────────────── 4. 시 각 화 ────────────────────────────
     fig, ax = plt.subplots(figsize=(12, 7))
 
-    # ─── 1) 스펙트럼 ───
+    # 스펙트럼
     img = librosa.display.specshow(
-        S_dB, x_coords=times, y_axis="mel", sr=sr, hop_length=320, ax=ax, cmap="magma"
+        S_dB, x_coords=times, y_axis="mel", sr=sr, hop_length=320, cmap="magma", ax=ax
     )
     fig.colorbar(img, ax=ax, format="%+2.0f dB")
     ax.set_title("Mel-Spectrogram with Pred / GT Segments")
 
-    # ─── 2) 예측 바 ───
-    for start, end, txt in pred_segments:
-        # ax.add_patch(
-        #     plt.Rectangle(
-        #         (start, 0),
-        #         end - start,
-        #         S_dB.shape[0],
-        #         facecolor="none",
-        #         edgecolor="cyan",
-        #         linewidth=2,
-        #         label="Predicted" if txt == pred_segments[0][2] else "",
-        #     )
-        # )
+    mel_bins = S_dB.shape[0]  # ② y-축 보정용 height
 
-        mel_bins = S_dB.shape[0]  # y축이 mel-bin index
+    # ── 예측 박스 (cyan)
+    for i, (st, ed, txt) in enumerate(pred_segments):
         ax.add_patch(
             plt.Rectangle(
-                (start, 0),
-                end - start,
+                (st, 0),
+                ed - st,
                 mel_bins,
                 facecolor="none",
                 edgecolor="cyan",
                 linewidth=2,
+                label="Predicted" if i == 0 else "",
             )
         )
-        ax.text(start, S_dB.shape[0] + 2, txt, color="cyan", fontsize=9)
+        ax.text(st, mel_bins + 2, txt, color="cyan", fontsize=8, rotation=90)
 
-    # ─── 3) (옵션) 정답 바 ───
-    for start, end, txt in gt_segments:
-        # ax.add_patch(
-        #     plt.Rectangle(
-        #         (start, 0),
-        #         end - start,
-        #         S_dB.shape[0],
-        #         facecolor="none",
-        #         edgecolor="lime",
-        #         linestyle="--",
-        #         linewidth=2,
-        #         label="Ground Truth" if txt == gt_segments[0][2] else "",
-        #     )
-        # )
-
-        mel_bins = S_dB.shape[0]  # y축이 mel-bin index
+    # ── 정답 박스 (lime, dashed)
+    for i, (st, ed, txt) in enumerate(gt_segments):
         ax.add_patch(
             plt.Rectangle(
-                (start, 0),
-                end - start,
+                (st, 0),
+                ed - st,
                 mel_bins,
                 facecolor="none",
-                edgecolor="cyan",
+                edgecolor="lime",
+                linestyle="--",
                 linewidth=2,
+                label="Ground Truth" if i == 0 else "",
             )
         )
-        ax.text(start, S_dB.shape[0] + 2, txt, color="cyan", fontsize=9)
 
-    # ─── 4) DTW Cost Matrix 하단 인셋 ───
-    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
-    cost_inset = inset_axes(ax, width="35%", height="35%", loc="upper right")
-
-    # alignment.costMatrix, alignment.index1, index2 는 앞 단계 DTW 결과 그대로 사용
-    # 예시용 무작위 행렬
-    dummy = np.random.rand(30, 200)
-    cost_inset.imshow(dummy, origin="lower", cmap="hot", aspect="auto")
-    cost_inset.plot(np.arange(30), np.linspace(0, 199, 30), color="cyan", linewidth=1)
-    cost_inset.set_title("DTW Cost + Path")
-    cost_inset.set_xlabel("Text Idx")
-    cost_inset.set_ylabel("Frame Idx")
-
+    ax.set_xlim(0, duration)
+    ax.set_xlabel("Time (sec)")
     handles, labels = ax.get_legend_handles_labels()
     if handles:
         ax.legend(handles, labels, loc="upper left")
-    ax.set_xlabel("Time (sec)")
-    ax.set_xlim(0, duration)
+
+    # ── DTW cost-matrix 인셋 ③
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+    cm = alignment.costMatrix[1:, 1:]  # padding 제거
+    path_x = alignment.index1 - 1  # 패딩 보정
+    path_y = alignment.index2 - 1
+
+    cost_ax = inset_axes(ax, width="35%", height="35%", loc="upper right")
+    cost_ax.imshow(cm.T, origin="lower", cmap="hot", aspect="auto")
+    cost_ax.plot(path_x, path_y, color="cyan", lw=1)
+    cost_ax.set_title("DTW Cost + Path")
+    cost_ax.set_xlabel("Text Idx")
+    cost_ax.set_ylabel("Frame Idx")
+
     plt.tight_layout()
-    plt.savefig("alignment_visual.png", dpi=150)
+    plt.savefig("alignment_visual_fixed.png", dpi=150)
     plt.show()

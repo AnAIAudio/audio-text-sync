@@ -101,7 +101,7 @@ def compare_dtw(text_embeds, audio_embeds):
     return alignment
 
 
-def run_dtw(text_embeds, audio_embeds, srt_file_path: str):
+def run_dtw(text_embeds, audio_embeds):
     from dtw import dtw
     from scipy.spatial.distance import cosine
 
