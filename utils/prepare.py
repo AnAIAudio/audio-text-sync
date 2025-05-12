@@ -46,4 +46,4 @@ def read_text_files(text_file_path):
         text_list = f.readlines()
 
     full_text = " ".join(text_list)
-    return text_list, full_text
+    return full_text

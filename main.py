@@ -4,6 +4,7 @@ from sklearn.preprocessing import normalize
 from audio.wave_to_vector import run_wave2vec
 from compare import compare_dtw, map_time_code, seconds_to_srt_time
 from text.bert import run_bert
+from text.text_util import create_text_line_full_text
 from text.word_bert import run_visualize, run_word_bert
 from utils.prepare import (
     prepare_directories,
@@ -25,7 +26,8 @@ if __name__ == "__main__":
         srt_directory_path,
     )
 
-    text_list, full_text = read_text_files(text_file_path=text_file_path)
+    full_text = read_text_files(text_file_path=text_file_path)
+    text_list = create_text_line_full_text(raw_text=full_text)
 
     # text_bert = run_bert(text_data=text_data)
     tokens, token_embeddings, token_sentence_ids = run_word_bert(
