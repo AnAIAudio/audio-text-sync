@@ -3,7 +3,7 @@ import torch
 from sklearn.preprocessing import normalize
 from audio.wave_to_vector import run_wave2vec
 from compare import compare_dtw, seconds_to_srt_time, run_dtw
-from srt.dtw_to_srt import run_dtw_to_srt
+from srt_utils.dtw_to_srt import run_dtw_to_srt
 from text.sentence_bert import run_sentence_bert
 from text.text_util import create_text_line
 from text.word_bert import run_visualize, run_word_bert
@@ -21,7 +21,12 @@ if __name__ == "__main__":
         text_directory_path,
         srt_directory_path,
     ) = prepare_directories()
-    audio_file_path, text_file_path, srt_file_path = test_file_paths(
+    (
+        audio_file_path,
+        text_file_path,
+        srt_file_path,
+        correct_srt_file_path,
+    ) = test_file_paths(
         audio_directory_path,
         text_directory_path,
         srt_directory_path,

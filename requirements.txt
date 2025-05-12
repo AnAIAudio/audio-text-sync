@@ -13,3 +13,4 @@ huggingface_hub[hf_xet]
 scikit-learn
 nltk
 kss
+srt
