@@ -110,6 +110,18 @@ def run_dtw(text_embeds, audio_embeds):
         return cosine(x, y)
 
     # 4. DTW 계산
-    alignment = dtw(text_embeds, audio_embeds, dist_method=cosine_dist)
+    alignment = dtw(
+        text_embeds,
+        audio_embeds,
+        dist_method=cosine_dist,
+        keep_internals=True,
+    )
+
+    # 시각화용 변수
+    # costMatrix = alignment.costMatrix  # (T_text+1, T_audio+1)  패딩 포함
+    # index1 = alignment.index1  # 길이 = 정렬 경로 길이
+    # index2 = alignment.index2
+    # text_len = text_embeds.shape[0]  # T_text
+    # audio_len = audio_embeds.shape[0]  # T_audio
 
     return alignment

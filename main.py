@@ -41,8 +41,8 @@ if __name__ == "__main__":
         audio_file_path=audio_file_path
     )
 
-    # alignment = run_dtw(text_embedding, audio_embedding)
-    alignment = compare_dtw(text_embedding, audio_embedding)
+    alignment = run_dtw(text_embedding, audio_embedding)
+    # alignment = compare_dtw(text_embedding, audio_embedding)
 
     run_dtw_to_srt(
         sentences=text_list,
