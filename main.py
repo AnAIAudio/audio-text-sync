@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     now = datetime.now()
     formatted = now.strftime("%Y%m%d%H%M%S")
-    srt_file_path = os.path.join(SRT_DIRECTORY_PATH, "voix_result_srt.srt")
+    srt_file_path = os.path.join(SRT_DIRECTORY_PATH, f"voix_result_srt_{formatted}.srt")
 
     map_time_code(
         sentences=text_data,

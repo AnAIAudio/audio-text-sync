@@ -1,5 +1,5 @@
 .conda
 __pycache__
 *.pyc
-
+*.srt
 .idea
