@@ -1,7 +1,7 @@
 def run_word_bert(sentences: list[str], full_text: str):
     import torch
     from sklearn.preprocessing import normalize
-    from transformers import BertTokenizer, BertModel
+    from transformers import BertTokenizerFast, BertModel
 
     # 2. 문장별 텍스트 범위 추적
     sentence_spans = []
@@ -12,7 +12,7 @@ def run_word_bert(sentences: list[str], full_text: str):
         start = end + 1  # 띄어쓰기 포함
 
     # 3. BERT 모델 및 토크나이저
-    tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
+    tokenizer = BertTokenizerFast.from_pretrained("bert-base-multilingual-cased")
     bert_model = BertModel.from_pretrained("bert-base-multilingual-cased")
     inputs = tokenizer(
         full_text,
