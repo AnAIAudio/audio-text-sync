@@ -6,14 +6,8 @@ def run_dtw_to_srt(
     audio_embedding,
     srt_file_path: str = "",
 ):
-    import datetime
-
-    def seconds_to_srt_time(seconds):
-        td = datetime.timedelta(seconds=seconds)
-        s = str(td)[:-3] if "." in str(td) else str(td) + ".000"
-        if len(s.split(":")[0]) == 1:
-            s = "0" + s
-        return s.replace(".", ",")
+    import numpy as np
+    from compare import seconds_to_srt_time
 
     # 1. 문장 개수
     n_sentences = len(sentences)
@@ -22,22 +16,23 @@ def run_dtw_to_srt(
     duration = waveform.shape[-1] / sample_rate  # 전체 길이(초)
     hidden_len = audio_embedding.shape[0]  # Wav2Vec2 프레임 수
     true_stride = duration / hidden_len  # ✓ 보정된 stride
-
-    frame_to_time = lambda idx: idx * true_stride
     # frame_to_time = lambda idx: idx * 0.02  # 20ms per frame (Wav2Vec2 default stride)
+    frame_to_time = lambda idx: idx * true_stride
+
+    # DTW 매핑 후
+    mapped_frames_per_sentence = [[] for _ in range(n_sentences)]
+    for sent_idx, frame_idx in zip(alignment.index1, alignment.index2):
+        mapped_frames_per_sentence[sent_idx].append(frame_idx)
 
     sentence_times = []
-    for i in range(n_sentences):
-        indices = [j for j, k in zip(alignment.index1, alignment.index2) if j == i]
-        if not indices:
-            sentence_times.append((0.0, 0.0))
-        else:
-            audio_indices = [
-                k for j, k in zip(alignment.index1, alignment.index2) if j == i
-            ]
-            start_time = frame_to_time(min(audio_indices))
-            end_time = frame_to_time(max(audio_indices))
-            sentence_times.append((start_time, end_time))
+    for frames in mapped_frames_per_sentence:
+        if not frames:
+            continue
+        ss, ee = np.percentile(frames, [10, 90])  # ③ 꼬리 자르기
+        start_sec = ss * true_stride
+        end_sec = ee * true_stride
+        # 최소 길이 보장 & 앞뒤 겹침 방지 루틴 ...
+        sentence_times.append((start_sec, end_sec))
 
     # 3. SRT 형식 출력
     print("\nGenerated SRT:")
