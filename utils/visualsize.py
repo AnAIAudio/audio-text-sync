@@ -54,36 +54,44 @@ def visualize(alignment, audio_path, correct_srt_path, created_srt_path):
     fig, ax = plt.subplots(figsize=(12, 7))
 
     # 스펙트럼
+    ax.set_title("Mel-Spectrogram with Pred / GT Segments")
     img = librosa.display.specshow(
-        S_dB, x_coords=times, y_axis="mel", sr=sr, hop_length=320, cmap="magma", ax=ax
+        S_dB,
+        x_coords=times,
+        y_axis="mel",
+        sr=sr,
+        hop_length=320,
+        cmap="magma",
+        ax=ax,
     )
     fig.colorbar(img, ax=ax, format="%+2.0f dB")
-    ax.set_title("Mel-Spectrogram with Pred / GT Segments")
 
-    mel_bins = S_dB.shape[0]  # ② y-축 보정용 height
+    # 0. 기본: wav, sr, S_dB, times 계산은 동일
+    # mel 축은 위가 0 Hz, 아래가 8 kHz 이므로 보통 y0 > y1
+    y0, y1 = ax.get_ylim()
+    y_lower, y_upper = (min(y0, y1), max(y0, y1))  # 항상 작은→큰 순으로
 
-    # ── 예측 박스 (cyan)
+    # ── ① y-축 전체 덮도록 Rectangle
     for i, (st, ed, txt) in enumerate(pred_segments):
         ax.add_patch(
             plt.Rectangle(
-                (st, 0),
-                ed - st,
-                mel_bins,
+                (st, y_lower),  # (x, y)
+                ed - st,  # width
+                y_upper - y_lower,  # height  ← 축 전체
                 facecolor="none",
                 edgecolor="cyan",
                 linewidth=2,
                 label="Predicted" if i == 0 else "",
             )
         )
-        ax.text(st, mel_bins + 2, txt, color="cyan", fontsize=8, rotation=90)
+        ax.text(st, y_upper + 200, txt, rotation=90, color="cyan", fontsize=8)
 
-    # ── 정답 박스 (lime, dashed)
     for i, (st, ed, txt) in enumerate(gt_segments):
         ax.add_patch(
             plt.Rectangle(
-                (st, 0),
+                (st, y_lower),
                 ed - st,
-                mel_bins,
+                y_upper - y_lower,
                 facecolor="none",
                 edgecolor="lime",
                 linestyle="--",
@@ -101,9 +109,13 @@ def visualize(alignment, audio_path, correct_srt_path, created_srt_path):
     # ── DTW cost-matrix 인셋 ③
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-    cm = alignment.costMatrix[1:, 1:]  # padding 제거
-    path_x = alignment.index1 - 1  # 패딩 보정
+    # ── ③ DTW 히트맵 인셋 보정
+    cm = alignment.costMatrix[1:, 1:]
+    path_x = alignment.index1 - 1
     path_y = alignment.index2 - 1
+    # cm = alignment.costMatrix[1:, 1:]  # padding 제거
+    # path_x = alignment.index1 - 1  # 패딩 보정
+    # path_y = alignment.index2 - 1
 
     cost_ax = inset_axes(ax, width="35%", height="35%", loc="upper right")
     cost_ax.imshow(cm.T, origin="lower", cmap="hot", aspect="auto")
