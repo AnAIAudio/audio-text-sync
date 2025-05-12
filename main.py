@@ -23,6 +23,8 @@ if __name__ == "__main__":
     audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3.mp3")
     text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt.txt")
 
+    torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # run_mfcc(audio_file_path=audio_file_path)
     # run_tdf(text_file_path=text_file_path)
 
@@ -33,4 +35,4 @@ if __name__ == "__main__":
     ss = run_bert(text_data=text_data)
     zz = run_wave2vec(audio_file_path=audio_file_path)
     gg = compare_dtw(ss, zz)
-    # map_time_code(sentences=text_data, alignment=gg)
+    map_time_code(sentences=text_data, alignment=gg)
