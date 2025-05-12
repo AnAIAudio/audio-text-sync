@@ -7,7 +7,7 @@ def compare_dtw(text_embeds, audio_embeds):
         return cosine(x, y)
 
     # 4. DTW 계산
-    alignment = dtw(text_embeds, audio_embeds, dist=cosine_dist)
+    alignment = dtw(text_embeds, audio_embeds, dist_method=cosine_dist)
 
     return alignment
 

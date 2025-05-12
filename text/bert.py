@@ -14,7 +14,4 @@ def run_bert(text_data: list[str]):
     return sentence_embeddings
 
     # 4. NumPy 배열로 변환 (DTW에 바로 사용 가능)
-    time_series = np.array(sentence_embeddings)
-
-    print(time_series.shape)  # 예: (4, 384) → 문장 4개, 각 벡터 384차원
-    print(time_series[0])  # 첫 문장의 벡터
+    # time_series = np.array(sentence_embeddings)

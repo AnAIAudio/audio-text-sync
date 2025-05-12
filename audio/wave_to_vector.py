@@ -17,7 +17,16 @@ def run_wave2vec(audio_file_path: str):
 
     # 오디오 로드 (16kHz mono)
     waveform, sample_rate = torchaudio.load(audio_file_path)
-    waveform = waveform.squeeze()  # (1, T) → (T,)
+
+    # 스테레오 → 단일 채널 변환
+    # waveform = waveform.squeeze()  # (1, T) → (T,)
+    if waveform.shape[0] > 1:
+        # 여러 채널이 있을 경우 평균 내서 단일 채널로
+        waveform = waveform.mean(dim=0)
+    else:
+        # 단일 채널인 경우 (1, T) → (T,)
+        waveform = waveform.squeeze()
+
     if sample_rate != 16000:
         resampler = torchaudio.transforms.Resample(
             orig_freq=sample_rate, new_freq=16000
