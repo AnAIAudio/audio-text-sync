@@ -13,11 +13,16 @@ if __name__ == "__main__":
     TEXT_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "text")
     SRT_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "srt")
 
-    path_list = [AUDIO_DIRECTORY_PATH, TEXT_DIRECTORY_PATH, SRT_DIRECTORY_PATH]
+    path_list = [
+        TEMP_DIRECTORY_PATH,
+        AUDIO_DIRECTORY_PATH,
+        TEXT_DIRECTORY_PATH,
+        SRT_DIRECTORY_PATH,
+    ]
 
     for path in path_list:
         if not os.path.exists(path):
-            os.makedirs(TEMP_DIRECTORY_PATH, exist_ok=True)
+            os.makedirs(path, exist_ok=True)
 
     audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3.mp3")
     text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt.txt")
