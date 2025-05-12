@@ -23,7 +23,7 @@ def split_sentences(text: str, language: str = "ko"):
     else:
         import nltk
 
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         from nltk.tokenize import sent_tokenize
 
         return [s.strip() for s in sent_tokenize(text)]

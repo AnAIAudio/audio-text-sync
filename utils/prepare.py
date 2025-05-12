@@ -43,7 +43,6 @@ def test_file_paths(audio_directory_path, text_directory_path, srt_directory_pat
 def read_text_files(text_file_path):
     # 2. 문장 리스트 준비 (시계열 순서대로 정렬된 문장들)
     with open(text_file_path, "r") as f:
-        text_list = f.readlines()
+        text = f.read()
 
-    full_text = " ".join(text_list)
-    return full_text
+    return text
