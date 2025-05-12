@@ -11,7 +11,9 @@ def run_mfcc(audio_file_path: str):
     import matplotlib.pyplot as plt
 
     # 오디오 파일 로드
-    y, sr = librosa.load(audio_file_path, sr=None)  # sr=None으로 원본 샘플링 레이트 사용
+    y, sr = librosa.load(
+        audio_file_path, sr=None
+    )  # sr=None으로 원본 샘플링 레이트 사용
 
     # MFCC 추출
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)  # 13개의 MFCC 계수 추출

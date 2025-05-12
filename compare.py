@@ -17,10 +17,10 @@ def map_time_code(sentences: list[str], alignment):
 
     def seconds_to_srt_time(seconds):
         td = datetime.timedelta(seconds=seconds)
-        s = str(td)[:-3] if '.' in str(td) else str(td) + '.000'
-        if len(s.split(':')[0]) == 1:
-            s = '0' + s
-        return s.replace('.', ',')
+        s = str(td)[:-3] if "." in str(td) else str(td) + ".000"
+        if len(s.split(":")[0]) == 1:
+            s = "0" + s
+        return s.replace(".", ",")
 
     # 1. 문장 개수
     n_sentences = len(sentences)
@@ -34,7 +34,9 @@ def map_time_code(sentences: list[str], alignment):
         if not indices:
             sentence_times.append((0.0, 0.0))
         else:
-            audio_indices = [k for j, k in zip(alignment.index1, alignment.index2) if j == i]
+            audio_indices = [
+                k for j, k in zip(alignment.index1, alignment.index2) if j == i
+            ]
             start_time = frame_to_time(min(audio_indices))
             end_time = frame_to_time(max(audio_indices))
             sentence_times.append((start_time, end_time))

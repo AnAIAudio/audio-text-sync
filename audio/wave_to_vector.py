@@ -19,11 +19,15 @@ def run_wave2vec(audio_file_path: str):
     waveform, sample_rate = torchaudio.load(audio_file_path)
     waveform = waveform.squeeze()  # (1, T) → (T,)
     if sample_rate != 16000:
-        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+        resampler = torchaudio.transforms.Resample(
+            orig_freq=sample_rate, new_freq=16000
+        )
         waveform = resampler(waveform)
 
     # 입력 준비
-    input_values = processor(waveform, sampling_rate=16000, return_tensors="pt").input_values
+    input_values = processor(
+        waveform, sampling_rate=16000, return_tensors="pt"
+    ).input_values
 
     # 임베딩 추출
     with torch.no_grad():

@@ -1,3 +1,5 @@
+import torch
+
 from audio.mfcc import run_mfcc
 from audio.wave_to_vector import run_wave2vec
 from compare import compare_dtw, map_time_code
@@ -9,9 +11,9 @@ if __name__ == "__main__":
     from custom_path import MAIN_BASE_PATH
     from scb_dtw import run_dtw
 
-    TEMP_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, 'temp')
-    AUDIO_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, 'audio')
-    TEXT_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, 'text')
+    TEMP_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "temp")
+    AUDIO_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "audio")
+    TEXT_DIRECTORY_PATH = os.path.join(MAIN_BASE_PATH, "text")
 
     if not os.path.exists(TEMP_DIRECTORY_PATH):
         os.makedirs(TEMP_DIRECTORY_PATH, exist_ok=True)
@@ -22,9 +24,10 @@ if __name__ == "__main__":
     if not os.path.exists(TEXT_DIRECTORY_PATH):
         os.makedirs(TEXT_DIRECTORY_PATH, exist_ok=True)
 
-    audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, 'voix_result_mp3.mp3')
-    text_file_path = os.path.join(TEXT_DIRECTORY_PATH, 'voix_result_txt.txt')
+    audio_file_path = os.path.join(AUDIO_DIRECTORY_PATH, "voix_result_mp3.mp3")
+    text_file_path = os.path.join(TEXT_DIRECTORY_PATH, "voix_result_txt.txt")
 
+    torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # run_mfcc(audio_file_path=audio_file_path)
     # run_tdf(text_file_path=text_file_path)
 
