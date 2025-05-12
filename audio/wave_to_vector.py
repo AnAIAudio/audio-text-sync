@@ -7,8 +7,8 @@ def run_wave2vec(audio_file_path: str):
 
     import torch
     import torchaudio
-    from transformers import Wav2Vec2Model, Wav2Vec2Processor
     from sklearn.preprocessing import normalize
+    from transformers import Wav2Vec2Model, Wav2Vec2Processor
 
     # 모델 로딩
     processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
@@ -16,6 +16,7 @@ def run_wave2vec(audio_file_path: str):
 
     # 오디오 로드 (16kHz mono)
     waveform, sample_rate = torchaudio.load(audio_file_path)
+    waveform = waveform.squeeze()  # (1, T) → (T,)
 
     # 스테레오 → 단일 채널 변환
     # waveform = waveform.squeeze()  # (1, T) → (T,)

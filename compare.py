@@ -184,3 +184,17 @@ def run_to_srt(tokens, mapping, srt_file_path: str):
     with open(srt_file_path, "w", encoding="utf-8") as f:
         for num, start, end, word in srt_entries:
             f.write(f"{num}\n{start} --> {end}\n{word}\n\n")
+
+
+def run_dtw(text_embeds, audio_embeds, srt_file_path: str):
+    from dtw import dtw
+    from scipy.spatial.distance import cosine
+
+    # 3. 거리 계산 함수 정의 (cosine distance)
+    def cosine_dist(x, y):
+        return cosine(x, y)
+
+    # 4. DTW 계산
+    alignment = dtw(text_embeds, audio_embeds, dist_method=cosine_dist)
+
+    return alignment
