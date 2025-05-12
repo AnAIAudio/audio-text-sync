@@ -29,7 +29,7 @@ def split_sentences(text: str, language: str = "ko"):
         return [s.strip() for s in sent_tokenize(text)]
 
 
-def create_text_line_full_text(raw_text: str, lang_code: str = "en"):
+def create_text_line(raw_text: str, lang_code: str = "en"):
 
     sentences = []
     for line in raw_text.splitlines():

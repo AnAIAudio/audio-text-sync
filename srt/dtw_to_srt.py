@@ -1,4 +1,11 @@
-def run_dtw_to_srt(sentences: list[str], alignment, srt_file_path: str = ""):
+def run_dtw_to_srt(
+    sentences: list[str],
+    alignment,
+    waveform,
+    sample_rate,
+    audio_embedding,
+    srt_file_path: str = "",
+):
     import datetime
 
     def seconds_to_srt_time(seconds):
@@ -12,7 +19,12 @@ def run_dtw_to_srt(sentences: list[str], alignment, srt_file_path: str = ""):
     n_sentences = len(sentences)
 
     # 2. 문장별로 매핑된 오디오 프레임들 추출
-    frame_to_time = lambda idx: idx * 0.02  # 20ms per frame (Wav2Vec2 default stride)
+    duration = waveform.shape[-1] / sample_rate  # 전체 길이(초)
+    hidden_len = audio_embedding.shape[0]  # Wav2Vec2 프레임 수
+    true_stride = duration / hidden_len  # ✓ 보정된 stride
+
+    frame_to_time = lambda idx: idx * true_stride
+    # frame_to_time = lambda idx: idx * 0.02  # 20ms per frame (Wav2Vec2 default stride)
 
     sentence_times = []
     for i in range(n_sentences):

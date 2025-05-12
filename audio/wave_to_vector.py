@@ -43,14 +43,14 @@ def run_wave2vec(audio_file_path: str):
         embeddings = model(input_values).last_hidden_state.squeeze(0)  # (T, D)
         embeddings = embeddings.cpu().numpy()  # ← 명시적으로 NumPy로 변환
 
-    embeddings = downsample_embeddings(embeddings, factor=5)
+    # embeddings = downsample_embeddings(embeddings, factor=5)
 
     # embeddings = normalize(embeddings)
 
     # 예: (500, 768)
     print("Audio embeddings shape : ", embeddings.shape)
 
-    return embeddings
+    return embeddings, waveform, sample_rate
 
 
 # 3. Downsampling (오디오 임베딩)
