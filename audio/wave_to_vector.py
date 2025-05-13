@@ -43,8 +43,8 @@ def run_wave2vec(audio_file_path: str):
         embeddings = model(input_values).last_hidden_state.squeeze(0)  # (T, D)
         embeddings = embeddings.cpu().numpy()  # ← 명시적으로 NumPy로 변환
 
-    embeddings = downsample_embeddings(embeddings, factor=5)
-
+    embeddings = downsample_embeddings(embeddings, factor=40)
+    embeddings = normalize(embeddings, axis=1, norm="l2")
     # embeddings = normalize(embeddings)
 
     # 예: (500, 768)
