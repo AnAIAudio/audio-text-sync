@@ -1,38 +1,10 @@
 import subprocess, os
 from pathlib import Path
 from typing import List
-
-import srt, datetime
-import numpy as np
+import srt
 from whisper import Whisper
 
 from text.text_util import Segment
-
-
-def cut_wav(audio_path, srt_path, out_dir):
-    Path(out_dir).mkdir(exist_ok=True)
-    srt_txt = Path(srt_path).read_text(encoding="utf-8")
-    subs = list(srt.parse(srt_txt))
-    for i, sub in enumerate(subs, 1):
-        s, e = sub.start.total_seconds(), sub.end.total_seconds()
-        out = Path(out_dir) / f"sent_{i:03d}.wav"
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-y",
-                "-i",
-                audio_path,
-                "-ss",
-                f"{s}",
-                "-to",
-                f"{e}",
-                "-c",
-                "copy",
-                str(out),
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
 
 
 def load_whisper_model() -> Whisper:
@@ -46,8 +18,8 @@ def load_whisper_model() -> Whisper:
     """
     import whisper
 
-    # model_name = "large-v3"
-    model_name = "base"
+    model_name = "large-v3"
+    # model_name = "base"
 
     available_model_list = whisper.available_models()
 
@@ -135,11 +107,3 @@ def segment_srt(segments: List[Segment], srt_file_path: str):
 
         with open(srt_file_path, "a", encoding="utf-8") as f:
             f.write(segment)
-
-
-def check_audio_sync(sent_embeds, audio_embeds):
-    from scipy.spatial.distance import cosine
-
-    for i, (t_vec, a_vec) in enumerate(zip(sent_embeds, audio_embeds), 1):
-        sim = 1 - cosine(t_vec, a_vec)
-        print(f"{i:03d}  cos_sim = {sim:.3f}")
