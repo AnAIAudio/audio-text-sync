@@ -93,8 +93,16 @@ def merge_segments(segments: List[Segment], picker: SequentialPicker) -> List[Se
         picker_list = picker.take(n=1)
         picker_text = "".join(picker_list)
 
-        similar = calc_text_similarity(str(picker_text).lower(), buf_text.lower())
-        print("similar , text , buf_text : ", similar, picker_text, buf_text)
+        similar = calc_text_similarity(
+            pre_processing_text(picker_text),
+            pre_processing_text(buf_text),
+        )
+        print(
+            "similar , text , buf_text : ",
+            similar,
+            pre_processing_text(picker_text),
+            pre_processing_text(buf_text),
+        )
         if similar < 0.75:
             picker.move_back()
             continue
@@ -133,3 +141,14 @@ def calc_text_similarity(text1: str, text2: str) -> float:
     sim = util.cos_sim(emb_a, emb_b)
     similarity = float(sim.item())
     return similarity
+
+
+def pre_processing_text(text: str):
+    import re, unicodedata
+
+    txt = unicodedata.normalize("NFKC", text)
+    txt = txt.lower()
+    txt = re.sub(r"https?://\S+|www\.\S+", " URL ", txt)
+    # txt = re.sub(r"[^\w\s]", " ", txt)  # 구두점 제거
+    txt = re.sub(r"\s+", " ", txt).strip()
+    return txt
