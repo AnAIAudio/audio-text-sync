@@ -1,7 +1,6 @@
 import torch
 from audio.cut_wave import (
     stt_using_whisper,
-    whisper_text,
     segment_srt,
 )
 from text.text_util import (
@@ -39,7 +38,6 @@ if __name__ == "__main__":
 
     whisper_result = stt_using_whisper(audio_file_path=audio_file_path)
     segments = whisper_result["segments"]
-    whisper_text_list = whisper_text(whisper_result["segments"])
 
     original_seq = SequentialPicker(items=text_list)
     merged_segments = merge_segments(
