@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     original_seq = SequentialPicker(items=text_list)
     merged_segments = merge_segments(
-        segments=whisper_result["segments"],
+        segments=segments,
         picker=original_seq,
     )
 

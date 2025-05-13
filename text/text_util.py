@@ -35,6 +35,9 @@ class SequentialPicker:
         self.items = list(items)
         self.idx = 0
 
+    def move_back(self, steps=1):
+        self.idx = max(0, self.idx - steps)
+
     def take(self, n: int, *, on_short: str = "truncate", pad_value=None) -> List[T]:
         start, end = self.idx, self.idx + n
         self.idx = min(end, len(self.items))  # 포인터 이동
@@ -87,11 +90,14 @@ def merge_segments(segments: List[Segment], picker: SequentialPicker) -> List[Se
         if not is_complete(buf_text):
             continue
 
-        dddd = split_sentences(text=buf_text)
-        zzzz = len(dddd)
-
-        picker_list = picker.take(n=zzzz)
+        picker_list = picker.take(n=1)
         picker_text = "".join(picker_list)
+
+        similar = calc_text_similarity(picker_text, buf_text)
+        print("similar , text , buf_text : ", similar, picker_text, buf_text)
+        if similar < 0.8:
+            picker.move_back()
+            continue
 
         merged.append(
             {
@@ -121,5 +127,4 @@ def calc_text_similarity(text1: str, text2: str) -> float:
     emb_a, emb_b = model.encode([text1, text2], convert_to_tensor=True)
     sim = util.cos_sim(emb_a, emb_b)
     similarity = float(sim.item())
-    print(f"similarity: {similarity}")
     return similarity
