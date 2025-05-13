@@ -80,20 +80,49 @@ def stt_using_whisper(audio_file_path: str = None, target_lang: str = "en"):
     return transcribe_result
 
 
-def transcribe_audio(segments, srt_file_path):
+def whisper_text(segments):
+    text_list = []
+    for segment in segments:
+        text = segment["text"]
+        text_list.append(text)
+    return text_list
+
+
+def whisper_srt(segments, text_list: list[str], srt_file_path: str):
     from datetime import timedelta
 
-    for segment in segments:
-        start_time = str(0) + str(timedelta(seconds=int(segment["start"]))) + ",000"
-        end_time = str(0) + str(timedelta(seconds=int(segment["end"]))) + ",000"
-        text = segment["text"]
-        segment_id = segment["id"] + 1
+    # text_list = []
+    # for segment in segments:
+    #     start_time = str(0) + str(timedelta(seconds=int(segment["start"]))) + ",000"
+    #     end_time = str(0) + str(timedelta(seconds=int(segment["end"]))) + ",000"
+    #     text = segment["text"]
+    #     segment_id = segment["id"] + 1
+    #     segment = f"{segment_id}\n{start_time} --> {end_time}\n{text[1:] if text[0] is ' ' else text}\n\n"
+    #     # text_list.append(text)
+    #
+    #     with open(srt_file_path, "a", encoding="utf-8") as f:
+    #         f.write(segment)
+
+    for i, text in enumerate(text_list, 1):
+        # print(f"{i:03d}  {text}")
+
+        # start_time = str(0) + str(timedelta(seconds=int(segment["start"]))) + ",000"
+        start_time = str(0) + str(timedelta(seconds=int(segments[i]["start"]))) + ",000"
+
+        # end_time = str(0) + str(timedelta(seconds=int(segment["end"]))) + ",000"
+        end_time = str(0) + str(timedelta(seconds=int(segments[i]["end"]))) + ",000"
+        # text = segment["text"]
+
+        segments[i]["text"] = text
+
+        segment_id = segments[i]["id"] + 1
         segment = f"{segment_id}\n{start_time} --> {end_time}\n{text[1:] if text[0] is ' ' else text}\n\n"
+        # text_list.append(text)
 
         with open(srt_file_path, "a", encoding="utf-8") as f:
             f.write(segment)
 
-    return srt_file_path
+    # return text_list
 
 
 def check_audio_sync(sent_embeds, audio_embeds):
