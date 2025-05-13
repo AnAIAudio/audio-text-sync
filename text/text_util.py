@@ -109,3 +109,17 @@ def merge_segments(segments: List[Segment], picker: SequentialPicker) -> List[Se
         merged.append({"start": buf_start or 0.0, "end": last_end, "text": buf_text})
 
     return merged
+
+
+def calc_text_similarity(text1: str, text2: str) -> float:
+    from sentence_transformers import SentenceTransformer, util
+
+    model = SentenceTransformer(
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+
+    emb_a, emb_b = model.encode([text1, text2], convert_to_tensor=True)
+    sim = util.cos_sim(emb_a, emb_b)
+    similarity = float(sim.item())
+    print(f"similarity: {similarity}")
+    return similarity
