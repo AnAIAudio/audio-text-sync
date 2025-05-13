@@ -15,8 +15,8 @@ def load_whisper_model() -> Whisper:
     """
     import whisper
 
-    model_name = "large-v3"
-    # model_name = "base"
+    # model_name = "large-v3"
+    model_name = "medium"
 
     available_model_list = whisper.available_models()
 
@@ -65,7 +65,7 @@ def segment_srt(segments: List[Segment], srt_file_path: str):
         if not text:
             continue
 
-        text = text[1:] if text[0] is " " else text
+        text = text[1:] if text[0] == " " else text
         segment = f"{id}\n{start_time} --> {end_time}\n{text}\n\n"
         # text_list.append(text)
 

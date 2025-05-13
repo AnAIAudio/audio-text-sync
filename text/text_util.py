@@ -93,9 +93,9 @@ def merge_segments(segments: List[Segment], picker: SequentialPicker) -> List[Se
         picker_list = picker.take(n=1)
         picker_text = "".join(picker_list)
 
-        similar = calc_text_similarity(picker_text, buf_text)
+        similar = calc_text_similarity(str(picker_text).lower(), buf_text.lower())
         print("similar , text , buf_text : ", similar, picker_text, buf_text)
-        if similar < 0.8:
+        if similar < 0.75:
             picker.move_back()
             continue
 
@@ -118,10 +118,15 @@ def merge_segments(segments: List[Segment], picker: SequentialPicker) -> List[Se
 
 
 def calc_text_similarity(text1: str, text2: str) -> float:
+    import torch
     from sentence_transformers import SentenceTransformer, util
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    print("test")
     model = SentenceTransformer(
-        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        device=device,
     )
 
     emb_a, emb_b = model.encode([text1, text2], convert_to_tensor=True)
