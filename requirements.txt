@@ -1,17 +1,7 @@
 librosa
-numpy
-matplotlib
-seaborn
 black
-torch
-torchaudio
 transformers
 sentence-transformers
-dtw-python
-huggingface_hub
-huggingface_hub[hf_xet]
-scikit-learn
 nltk
 kss
-srt
 openai-whisper

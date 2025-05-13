@@ -1,4 +1,3 @@
-import torch
 from audio.cut_wave import (
     stt_using_whisper,
     segment_srt,
@@ -15,7 +14,6 @@ from utils.prepare import (
 )
 
 if __name__ == "__main__":
-    torch.device("cuda" if torch.cuda.is_available() else "cpu")
     (
         temp_directory_path,
         audio_directory_path,
