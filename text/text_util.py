@@ -1,4 +1,6 @@
-from typing import TypeVar, List, Sequence, Optional
+from itertools import cycle, islice
+from typing import TypeVar, Sequence
+from typing import List, Dict
 
 
 def split_sentences(text: str, language: str = "ko"):
@@ -24,8 +26,6 @@ def create_text_line(raw_text: str, lang_code: str = "en"):
 
     return sentences
 
-
-from itertools import cycle, islice
 
 T = TypeVar("T")
 
@@ -55,32 +55,18 @@ class SequentialPicker:
             raise ValueError("Not enough items left")
 
 
-import re
-from typing import List, Dict, Callable
-
 Segment = Dict[str, float | str]  # 최소한 start, end, text 만 있다고 가정
-
-# ──────────────────────────────────────────────────────────────
-# 1) “문장 완결” 판정 함수
-#    Whisper는 대부분 마침표/물음표/느낌표를 넣어 주므로
-#    텍스트가 그 기호로 끝나면 ‘완전한 문장’으로 보겠다는
-#    가장 단순한 정의입니다. 필요하면 더 정교하게 바꾸세요.
-# ──────────────────────────────────────────────────────────────
-_END_RE = re.compile(r'[.!?…]\s*["»”’)]*\s*$')
 
 
 def is_complete(text: str) -> bool:
+    import re
+
+    _END_RE = re.compile(r'[.!?…]\s*["»”’)]*\s*$')
+
     return bool(_END_RE.search(text))
 
 
-# ──────────────────────────────────────────────────────────────
-# 2) 머지 함수
-# ──────────────────────────────────────────────────────────────
-def merge_segments(
-    segments: List[Segment],
-    picker: SequentialPicker,
-    complete_fn: Callable[[str], bool] = is_complete,
-) -> List[Segment]:
+def merge_segments(segments: List[Segment], picker: SequentialPicker) -> List[Segment]:
     """
     segments   : Whisper segment dict들의 리스트
     complete_fn: buffer가 '완전한 문장'인지 판단하는 함수
@@ -98,7 +84,7 @@ def merge_segments(
         # ① 이어 붙이고, ② 문장 완결 검사
         buf_text = f"{buf_text} {seg['text']}".strip()
 
-        if not complete_fn(buf_text):
+        if not is_complete(buf_text):
             continue
 
         dddd = split_sentences(text=buf_text)

@@ -1,7 +1,4 @@
-import subprocess, os
-from pathlib import Path
 from typing import List
-import srt
 from whisper import Whisper
 
 from text.text_util import Segment
