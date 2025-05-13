@@ -103,7 +103,7 @@ def whisper_srt(segments, text_list: list[str], srt_file_path: str):
     #     with open(srt_file_path, "a", encoding="utf-8") as f:
     #         f.write(segment)
 
-    for i, text in enumerate(text_list, 1):
+    for i, text in enumerate(text_list):
         # print(f"{i:03d}  {text}")
 
         # start_time = str(0) + str(timedelta(seconds=int(segment["start"]))) + ",000"
