@@ -1,8 +1,12 @@
 import subprocess, os
 from pathlib import Path
+from typing import List
+
 import srt, datetime
 import numpy as np
 from whisper import Whisper
+
+from text.text_util import Segment
 
 
 def cut_wav(audio_path, srt_path, out_dir):
@@ -91,18 +95,6 @@ def whisper_text(segments):
 def whisper_srt(segments, text_list: list[str], srt_file_path: str):
     from datetime import timedelta
 
-    # text_list = []
-    # for segment in segments:
-    #     start_time = str(0) + str(timedelta(seconds=int(segment["start"]))) + ",000"
-    #     end_time = str(0) + str(timedelta(seconds=int(segment["end"]))) + ",000"
-    #     text = segment["text"]
-    #     segment_id = segment["id"] + 1
-    #     segment = f"{segment_id}\n{start_time} --> {end_time}\n{text[1:] if text[0] is ' ' else text}\n\n"
-    #     # text_list.append(text)
-    #
-    #     with open(srt_file_path, "a", encoding="utf-8") as f:
-    #         f.write(segment)
-
     for i, text in enumerate(text_list):
         # print(f"{i:03d}  {text}")
 
@@ -123,6 +115,26 @@ def whisper_srt(segments, text_list: list[str], srt_file_path: str):
             f.write(segment)
 
     # return text_list
+
+
+def segment_srt(segments: List[Segment], srt_file_path: str):
+    from datetime import timedelta
+
+    # text_list = []
+    for id, segment in enumerate(segments, start=1):
+        start_time = str(0) + str(timedelta(seconds=int(segment["start"]))) + ",000"
+        end_time = str(0) + str(timedelta(seconds=int(segment["end"]))) + ",000"
+        text = segment["text"]
+        # segment_id = segment["id"] + 1
+        if not text:
+            continue
+
+        text = text[1:] if text[0] is " " else text
+        segment = f"{id}\n{start_time} --> {end_time}\n{text}\n\n"
+        # text_list.append(text)
+
+        with open(srt_file_path, "a", encoding="utf-8") as f:
+            f.write(segment)
 
 
 def check_audio_sync(sent_embeds, audio_embeds):

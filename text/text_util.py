@@ -161,21 +161,24 @@ def merge_segments(
         # ① 이어 붙이고, ② 문장 완결 검사
         buf_text = f"{buf_text} {seg['text']}".strip()
 
-        if complete_fn(buf_text):
-            dddd = split_sentences(text=buf_text)
-            zzzz = len(dddd)
+        if not complete_fn(buf_text):
+            continue
 
-            picker_list = picker.take(n=zzzz)
+        dddd = split_sentences(text=buf_text)
+        zzzz = len(dddd)
 
-            merged.append(
-                {
-                    "start": buf_start,
-                    "end": seg["end"],
-                    "text": buf_text,
-                }
-            )
-            buf_text = ""  # 버퍼 초기화
-            buf_start = None  # 시작 시간 리셋
+        picker_list = picker.take(n=zzzz)
+        picker_text = "".join(picker_list)
+
+        merged.append(
+            {
+                "start": buf_start,
+                "end": seg["end"],
+                "text": picker_text,
+            }
+        )
+        buf_text = ""  # 버퍼 초기화
+        buf_start = None  # 시작 시간 리셋
 
     # 루프 종료 후에도 남은 텍스트가 있으면 마지막 문장으로 취급
     if buf_text:

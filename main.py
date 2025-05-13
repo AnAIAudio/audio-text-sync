@@ -3,6 +3,7 @@ from audio.cut_wave import (
     stt_using_whisper,
     whisper_text,
     whisper_srt,
+    segment_srt,
 )
 from text.text_util import (
     create_text_line,
@@ -49,21 +50,26 @@ if __name__ == "__main__":
 
     picked_text_list = []
     temp_text = ""
-    for whisper_text in whisper_text_list:
-        if not is_complete(whisper_text):
-            temp_text += whisper_text
-            continue
+    # for whisper_text in whisper_text_list:
+    #     if not is_complete(whisper_text):
+    #         temp_text += whisper_text
+    #         continue
+    #
+    #     dddd = split_sentences(text=temp_text)
+    #     zzzz = len(dddd)
+    #     temp_text = ""
+    #
+    #     picker_list = zz.take(n=zzzz)
+    #     # picker_list를 srt에 whisper text 대신 넣어야 함
+    #     picked_text_list.extend(picker_list)
 
-        dddd = split_sentences(text=temp_text)
-        zzzz = len(dddd)
-        temp_text = ""
-
-        picker_list = zz.take(n=zzzz)
-        picked_text_list.extend(picker_list)
-        # picker_list를 srt에 whisper text 대신 넣어야 함
-
-    whisper_srt(
-        segments=whisper_result["segments"],
-        text_list=picked_text_list,
+    segment_srt(
+        segments=test,
         srt_file_path=srt_file_path,
     )
+
+    # whisper_srt(
+    #     segments=whisper_result["segments"],
+    #     text_list=picked_text_list,
+    #     srt_file_path=srt_file_path,
+    # )
