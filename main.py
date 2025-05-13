@@ -1,7 +1,14 @@
 from datetime import datetime
 import torch
 from sklearn.preprocessing import normalize
-from audio.wave_to_vector import run_wave2vec
+import os
+from audio.cut_wave import (
+    stt_using_whisper,
+    transcribe_audio,
+    cut_wav,
+    check_audio_sync,
+)
+from audio.wave_to_vector import run_wave2vec, audio_embed_list
 from compare import compare_dtw, seconds_to_srt_time, run_dtw
 from srt_utils.dtw_to_srt import run_dtw_to_srt
 from text.sentence_bert import run_sentence_bert, run_token_level_bert
@@ -36,27 +43,41 @@ if __name__ == "__main__":
     full_text = read_text_files(text_file_path=text_file_path)
     text_list = create_text_line(raw_text=full_text)
 
+    whisper_result = stt_using_whisper(audio_file_path=audio_file_path)
+    transcribe_audio(whisper_result["segments"], srt_file_path=srt_file_path)
+    clip_dir_path = os.path.join(temp_directory_path, "clips")
+    cut_wav(
+        audio_path=audio_file_path,
+        srt_path=srt_file_path,
+        out_dir=clip_dir_path,
+    )
+
+    print("test")
+
     # text_embedding = run_sentence_bert(text_list=text_list)
     text_embedding = run_token_level_bert(texts=text_list, device="cpu")
-    audio_embedding, waveform, sample_rate = run_wave2vec(
-        audio_file_path=audio_file_path
-    )
+    # audio_embedding, waveform, sample_rate = run_wave2vec(
+    #     audio_file_path=audio_file_path
+    # )
+    audio_embedding = audio_embed_list(clip_dir_path=clip_dir_path)
 
-    alignment = run_dtw(text_embedding, audio_embedding)
+    check_audio_sync(text_embedding, audio_embedding)
+
+    # alignment = run_dtw(text_embedding, audio_embedding)
     # alignment = compare_dtw(text_embedding, audio_embedding)
 
-    run_dtw_to_srt(
-        sentences=text_list,
-        alignment=alignment,
-        srt_file_path=srt_file_path,
-        waveform=waveform,
-        sample_rate=sample_rate,
-        audio_embedding=audio_embedding,
-    )
-
-    visualize(
-        alignment=alignment,
-        audio_path=audio_file_path,
-        correct_srt_path=correct_srt_file_path,
-        created_srt_path=srt_file_path,
-    )
+    # run_dtw_to_srt(
+    #     sentences=text_list,
+    #     alignment=alignment,
+    #     srt_file_path=srt_file_path,
+    #     waveform=waveform,
+    #     sample_rate=sample_rate,
+    #     audio_embedding=audio_embedding,
+    # )
+    #
+    # visualize(
+    #     alignment=alignment,
+    #     audio_path=audio_file_path,
+    #     correct_srt_path=correct_srt_file_path,
+    #     created_srt_path=srt_file_path,
+    # )

@@ -1,6 +1,25 @@
 import os
 
 
+def audio_embed_list(clip_dir_path: str):
+    import glob
+    import numpy as np
+
+    # audio_embeds = np.array(
+    #     [run_wave2vec(p) for p in sorted(glob.glob(f"{clip_dir_path}/sent_*.wav"))]
+    # )
+
+    audio_embeds = []
+    for p in sorted(glob.glob(f"{clip_dir_path}/sent_*.wav")):
+        embeddings, waveform, sample_rate = run_wave2vec(p)
+        # 여러 프레임의 임베딩(2차원)을 평균 내어 한 개의 벡터(1차원)로 변환
+        mean_vector = embeddings.mean(axis=0)
+        audio_embeds.append(mean_vector)
+
+    audio_embeds = np.array(audio_embeds)
+    return audio_embeds
+
+
 def run_wave2vec(audio_file_path: str):
     if not os.path.exists(audio_file_path):
         raise FileNotFoundError(f"Audio file not found: {audio_file_path}")
