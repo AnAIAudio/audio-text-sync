@@ -15,8 +15,8 @@ def load_whisper_model() -> Whisper:
     """
     import whisper
 
-    # model_name = "large-v3"
-    model_name = "medium"
+    model_name = "large-v3"
+    # model_name = "medium"
 
     available_model_list = whisper.available_models()
 

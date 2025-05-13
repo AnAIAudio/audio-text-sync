@@ -34,8 +34,8 @@ def test_file_paths(
     import os
     from datetime import datetime
 
-    audio_file_path = os.path.join(audio_directory_path, "voix_result_mp3.mp3")
-    text_file_path = os.path.join(text_directory_path, "voix_result_txt.txt")
+    audio_file_path = os.path.join(audio_directory_path, "voix_result_mp3_2.mp3")
+    text_file_path = os.path.join(text_directory_path, "voix_result_txt_2.txt")
     now = datetime.now()
     formatted = now.strftime("%Y%m%d%H%M%S")
     srt_file_path = os.path.join(srt_directory_path, f"voix_result_srt_{formatted}.srt")
