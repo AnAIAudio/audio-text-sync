@@ -8,3 +8,10 @@ openai-whisper
 numpy==1.26.3
 torch==2.2.0
 torchaudio==2.2.0
+dotenv
+openai
+langchain
+langchain-anthropic
+langchain-openai
+langchain-xai
+langchain-core
