@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableParallel
 from dotenv import load_dotenv
 
-from prompt import system_prompt
+from prompt import system_prompt, compare_system_prompt, example_text
 
 load_dotenv()
 
@@ -13,26 +13,14 @@ load_dotenv()
 def setup_models():
     """모델들을 초기화합니다."""
     models = {
-        # "openai": ChatOpenAI(),
+        # "openai": ChatOpenAI(model="gpt-4.1-nano"),
         "anthropic": ChatAnthropic(model="claude-3-5-haiku-latest"),
-        # "xai": ChatXAI()
+        # "xai": ChatXAI(model="grok-3-mini-latest")
     }
     return models
 
 
-def generate_translate(model, text):
-    """단일 모델을 사용하여 번역합니다."""
-    messages = [
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=text),
-    ]
-    response = model.invoke(messages)
-    return response.content
-
-
-if __name__ == "__main__":
-    text_to_translate = "안녕하세요, 이 텍스트를 영어로 번역해주세요."
-
+def run_agent(text_to_translate: str = example_text, language: str = "한국어") -> dict[str, str]:
     print("\n=== LangChain 병렬 번역 ===")
 
     models = setup_models()
@@ -47,7 +35,7 @@ if __name__ == "__main__":
 
     # 모든 모델에 동일한 메시지 전달
     messages = [
-        SystemMessage(content=system_prompt),
+        SystemMessage(content=system_prompt, language=language),
         HumanMessage(content=text_to_translate),
     ]
 
@@ -58,4 +46,19 @@ if __name__ == "__main__":
     results = {model_name: response.content for model_name, response in responses.items()}
 
     for model_name, result in results.items():
-        print(f"\n{model_name}: {result}")
+        print(f"\n{model_name}: \n{result}")
+
+    # 3개의 모델에서 반환된 결과값에 대해 최종 결과물을 종합하기 위한 모델 생성
+    compare_model = ChatAnthropic(model="claude-3-5-haiku-latest")
+
+    # compare_system_prompt 으로 변경
+    messages = [
+        SystemMessage(content=compare_system_prompt, language=language),
+        HumanMessage(content=f"{results}"),
+    ]
+
+    responses = compare_model.invoke(messages)
+    print(f"\ncompare_version: \n{responses.content}")
+
+    results["compare_version"] = responses.content
+    return results
