@@ -1,7 +1,9 @@
 from audio.cut_wave import (
     stt_using_whisper,
     segment_srt,
+    read_srt,
 )
+from llm.agent import run_agent
 from text.text_util import (
     create_text_line,
     SequentialPicker,
@@ -25,6 +27,7 @@ if __name__ == "__main__":
         text_file_path,
         srt_file_path,
         correct_srt_file_path,
+        formatted,
     ) = test_file_paths(
         audio_directory_path,
         text_directory_path,
@@ -46,4 +49,13 @@ if __name__ == "__main__":
     segment_srt(
         segments=merged_segments,
         srt_file_path=srt_file_path,
+    )
+
+    srt = read_srt(srt_file_path=srt_file_path)
+
+    run_agent(
+        srt_directory_path=srt_directory_path,
+        formatted=formatted,
+        text_to_translate=srt,
+        language="한국어",
     )

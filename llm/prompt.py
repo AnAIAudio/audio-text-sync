@@ -156,7 +156,6 @@ compare_system_prompt: str = """
 """
 
 
-
 eng_compare_system_prompt: str = """
 Given the outputs from multiple language models for the same subtitle translation task, synthesize the most accurate, natural, and constraint-compliant result.
 

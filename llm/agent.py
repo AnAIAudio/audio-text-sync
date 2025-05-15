@@ -1,3 +1,5 @@
+import os
+
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_xai import ChatXAI
@@ -5,7 +7,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableParallel
 from dotenv import load_dotenv
 
-from prompt import system_prompt, compare_system_prompt, example_text
+from audio.cut_wave import write_srt
+from llm.prompt import system_prompt, compare_system_prompt, example_text
 
 load_dotenv()
 
@@ -15,12 +18,19 @@ def setup_models():
     models = {
         # "openai": ChatOpenAI(model="gpt-4.1-nano"),
         "anthropic": ChatAnthropic(model="claude-3-5-haiku-latest"),
+        "anthropic_v2": ChatAnthropic(model="claude-3-5-haiku-latest"),
+        "anthropic_v3": ChatAnthropic(model="claude-3-5-haiku-latest"),
         # "xai": ChatXAI(model="grok-3-mini-latest")
     }
     return models
 
 
-def run_agent(text_to_translate: str = example_text, language: str = "한국어") -> dict[str, str]:
+def run_agent(
+    srt_directory_path: str,
+    formatted: str,
+    text_to_translate: str = example_text,
+    language: str = "한국어",
+) -> dict[str, str]:
     print("\n=== LangChain 병렬 번역 ===")
 
     models = setup_models()
@@ -43,9 +53,17 @@ def run_agent(text_to_translate: str = example_text, language: str = "한국어"
     responses = parallel_chain.invoke(messages)
 
     # 결과에서 content만 추출
-    results = {model_name: response.content for model_name, response in responses.items()}
+    results = {
+        model_name: response.content for model_name, response in responses.items()
+    }
 
+    # 결과값 srt 파일로 저장 및 출력
     for model_name, result in results.items():
+        srt_file_path = os.path.join(
+            srt_directory_path, f"voix_result_srt_{model_name}_{formatted}.srt"
+        )
+        write_srt(srt_file_path=srt_file_path, text=result)
+
         print(f"\n{model_name}: \n{result}")
 
     # 3개의 모델에서 반환된 결과값에 대해 최종 결과물을 종합하기 위한 모델 생성
@@ -61,4 +79,9 @@ def run_agent(text_to_translate: str = example_text, language: str = "한국어"
     print(f"\ncompare_version: \n{responses.content}")
 
     results["compare_version"] = responses.content
+    srt_file_path = os.path.join(
+        srt_directory_path, f"voix_result_srt_compare_{formatted}.srt"
+    )
+    write_srt(srt_file_path=srt_file_path, text=results["compare_version"])
+
     return results
