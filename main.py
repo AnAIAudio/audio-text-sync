@@ -3,7 +3,7 @@ from audio.cut_wave import (
     segment_srt,
     read_srt,
 )
-from llm.agent import run_agent
+from llm.agent import AgentModel
 from text.text_util import (
     create_text_line,
     SequentialPicker,
@@ -51,11 +51,11 @@ if __name__ == "__main__":
         srt_file_path=srt_file_path,
     )
 
-    srt = read_srt(srt_file_path=srt_file_path)
-
-    run_agent(
+    agent = AgentModel() # system_prompt, compare_system_prompt 여기서 변경 가능
+    agent.run(
         srt_directory_path=srt_directory_path,
         formatted=formatted,
-        text_to_translate=srt,
+        segments=merged_segments,
         language="한국어",
+        seperate_number=50,
     )
