@@ -1,7 +1,9 @@
 from audio.cut_wave import (
     stt_using_whisper,
     segment_srt,
+    read_srt,
 )
+from llm.agent import AgentModel
 from text.text_util import (
     create_text_line,
     SequentialPicker,
@@ -25,6 +27,7 @@ if __name__ == "__main__":
         text_file_path,
         srt_file_path,
         correct_srt_file_path,
+        formatted,
     ) = test_file_paths(
         audio_directory_path,
         text_directory_path,
@@ -46,4 +49,13 @@ if __name__ == "__main__":
     segment_srt(
         segments=merged_segments,
         srt_file_path=srt_file_path,
+    )
+
+    agent = AgentModel() # system_prompt, compare_system_prompt 여기서 변경 가능
+    agent.run(
+        srt_directory_path=srt_directory_path,
+        formatted=formatted,
+        segments=merged_segments,
+        language="한국어",
+        seperate_number=50,
     )

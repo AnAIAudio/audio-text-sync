@@ -71,3 +71,13 @@ def segment_srt(segments: List[Segment], srt_file_path: str):
 
         with open(srt_file_path, "a", encoding="utf-8") as f:
             f.write(segment)
+
+
+def read_srt(srt_file_path: str) -> str:
+    with open(srt_file_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def write_srt(srt_file_path: str, text: str):
+    with open(srt_file_path, "w", encoding="utf-8") as f:
+        f.write(text)
