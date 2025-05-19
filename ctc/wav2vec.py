@@ -1,3 +1,5 @@
+import os
+
 import torch
 import numpy as np
 import ctc_segmentation
@@ -29,7 +31,6 @@ def split_sentences(text: str, language: str = "ko"):
 
 
 def create_text_line(raw_text: str, lang_code: str = "en"):
-
     sentences = []
     for line in raw_text.splitlines():
         if line.strip():  # 빈 줄 건너뛰기
@@ -76,8 +77,11 @@ class Wav2VecModel:
         inputs = self.processor(
             audio, return_tensors="pt", padding="longest", sampling_rate=self.SAMPLERATE
         )
+        # 입력 텐서를 모델과 같은 장치로 이동
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+
         with torch.no_grad():
-            logits = self.model(inputs.input_values).logits
+            logits = self.model(inputs["input_values"]).logits
             probs = torch.nn.functional.softmax(logits, dim=-1)[0].to("cpu")
 
         # 트랜스크립트 토큰화
@@ -120,11 +124,15 @@ class Wav2VecModel:
         inputs = self.processor(
             audio, return_tensors="pt", padding="longest", sampling_rate=self.SAMPLERATE
         )
-        with torch.no_grad():
-            logits = self.model(inputs.input_values).logits.cpu()[0]
-            probs = torch.nn.functional.softmax(logits, dim=-1)
+        # 입력 텐서를 모델과 같은 장치로 이동
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
-        predicted_ids = torch.argmax(logits, dim=-1)
+        with torch.no_grad():
+            logits = self.model(inputs["input_values"]).logits
+            logits_cpu = logits.cpu()[0]
+            probs = torch.nn.functional.softmax(logits_cpu, dim=-1)
+
+        predicted_ids = torch.argmax(logits_cpu, dim=-1)
         pred_transcript = self.processor.decode(predicted_ids)
 
         # 트랜스크립션을 단어로 나누기
@@ -234,15 +242,19 @@ class Wav2VecModel:
 
 
 if __name__ == "__main__":
+    print("cuda : ", torch.cuda.is_available())
+
     print("start")
-    full_text = read_text_files(text_file_path="audio/25min/S23.txt")
+    text_path = os.path.join("audio", "25min", "S23.txt")
+    full_text = read_text_files(text_file_path=text_path)
     transcript = create_text_line(raw_text=full_text)
 
     print("init")
     model = Wav2VecModel(transcript=transcript)
 
     print("load")
-    audio = model.load_audio(file_path="audio/25min/S23.mp3")
+    audio_path = os.path.join("audio", "25min", "S23.mp3")
+    audio = model.load_audio(file_path=audio_path)
 
     print("align")
     transcript_alignments = model.align_with_transcript(audio)
