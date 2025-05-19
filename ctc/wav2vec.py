@@ -5,12 +5,52 @@ from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC, Wav2Vec2CTCTokenizer
 import soundfile as sf
 import librosa
 
+
+def read_text_files(text_file_path):
+    # 2. 문장 리스트 준비 (시계열 순서대로 정렬된 문장들)
+    with open(text_file_path, "r") as f:
+        text = f.read()
+
+    return text
+
+
+def split_sentences(text: str, language: str = "ko"):
+    if language == "ko":
+        import kss
+
+        return kss.split_sentences(text, strip=True)
+    else:
+        import nltk
+
+        nltk.download("punkt_tab", quiet=True)
+        from nltk.tokenize import sent_tokenize
+
+        return [s.strip() for s in sent_tokenize(text)]
+
+
+def create_text_line(raw_text: str, lang_code: str = "en"):
+
+    sentences = []
+    for line in raw_text.splitlines():
+        if line.strip():  # 빈 줄 건너뛰기
+            sentences.extend(split_sentences(line, lang_code))
+
+    return sentences
+
+
 class Wav2VecModel:
     def __init__(self, transcript: list[str]):
         model_name = "jonatasgrosman/wav2vec2-large-xlsr-53-english"
-        self.processor = Wav2Vec2Processor.from_pretrained(model_name, trust_remote_code=True)
-        self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        self.model = Wav2Vec2ForCTC.from_pretrained(model_name, trust_remote_code=True)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.processor = Wav2Vec2Processor.from_pretrained(
+            model_name, trust_remote_code=True
+        )
+        self.tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(
+            model_name, trust_remote_code=True
+        )
+        self.model = Wav2Vec2ForCTC.from_pretrained(
+            model_name, trust_remote_code=True
+        ).to(self.device)
         self.SAMPLERATE = 16000
         self.TRANSCRIPTS = transcript
 
@@ -28,15 +68,17 @@ class Wav2VecModel:
         return audio
 
     def align_with_transcript(
-            self,
-            audio: np.ndarray,
+        self,
+        audio: np.ndarray,
     ):
         assert audio.ndim == 1
         # 예측 실행, 로짓 및 확률 계산
-        inputs = self.processor(audio, return_tensors="pt", padding="longest", sampling_rate=self.SAMPLERATE)
+        inputs = self.processor(
+            audio, return_tensors="pt", padding="longest", sampling_rate=self.SAMPLERATE
+        )
         with torch.no_grad():
-            logits = self.model(inputs.input_values).logits.cpu()[0]
-            probs = torch.nn.functional.softmax(logits, dim=-1)
+            logits = self.model(inputs.input_values).logits
+            probs = torch.nn.functional.softmax(logits, dim=-1)[0].to("cpu")
 
         # 트랜스크립트 토큰화
         vocab = self.tokenizer.get_vocab()
@@ -46,7 +88,7 @@ class Wav2VecModel:
         tokens = []
         for transcript in self.TRANSCRIPTS:
             assert len(transcript) > 0
-            tok_ids = self.tokenizer(transcript.replace("\n", " ").lower())['input_ids']
+            tok_ids = self.tokenizer(transcript.replace("\n", " ").lower())["input_ids"]
             tok_ids = np.array(tok_ids, dtype=int)
             tokens.append(tok_ids[tok_ids != unk_id])
 
@@ -55,30 +97,178 @@ class Wav2VecModel:
         config = ctc_segmentation.CtcSegmentationParameters(char_list=char_list)
         config.index_duration = audio.shape[0] / probs.size()[0] / self.SAMPLERATE
 
-        ground_truth_mat, utt_begin_indices = ctc_segmentation.prepare_token_list(config, tokens)
-        timings, char_probs, state_list = ctc_segmentation.ctc_segmentation(config, probs.numpy(), ground_truth_mat)
-        segments = ctc_segmentation.determine_utterance_segments(config, utt_begin_indices, char_probs, timings,
-                                                                 self.TRANSCRIPTS)
-        return [{"text": t, "start": p[0], "end": p[1], "conf": p[2]} for t, p in zip(self.TRANSCRIPTS, segments)]
+        ground_truth_mat, utt_begin_indices = ctc_segmentation.prepare_token_list(
+            config, tokens
+        )
+        timings, char_probs, state_list = ctc_segmentation.ctc_segmentation(
+            config, probs.numpy(), ground_truth_mat
+        )
+        segments = ctc_segmentation.determine_utterance_segments(
+            config, utt_begin_indices, char_probs, timings, self.TRANSCRIPTS
+        )
+        return [
+            {"text": t, "start": p[0], "end": p[1], "conf": p[2]}
+            for t, p in zip(self.TRANSCRIPTS, segments)
+        ]
+
+    def get_word_timestamps(
+        self,
+        audio: np.ndarray,
+    ):
+        assert audio.ndim == 1
+        # 예측 실행, 로짓 및 확률 계산
+        inputs = self.processor(
+            audio, return_tensors="pt", padding="longest", sampling_rate=self.SAMPLERATE
+        )
+        with torch.no_grad():
+            logits = self.model(inputs.input_values).logits.cpu()[0]
+            probs = torch.nn.functional.softmax(logits, dim=-1)
+
+        predicted_ids = torch.argmax(logits, dim=-1)
+        pred_transcript = self.processor.decode(predicted_ids)
+
+        # 트랜스크립션을 단어로 나누기
+        words = pred_transcript.split(" ")
+
+        # 정렬
+        vocab = self.tokenizer.get_vocab()
+        inv_vocab = {v: k for k, v in vocab.items()}
+        char_list = [inv_vocab[i] for i in range(len(inv_vocab))]
+        config = ctc_segmentation.CtcSegmentationParameters(char_list=char_list)
+        config.index_duration = audio.shape[0] / probs.size()[0] / self.SAMPLERATE
+
+        ground_truth_mat, utt_begin_indices = ctc_segmentation.prepare_text(
+            config, words
+        )
+        timings, char_probs, state_list = ctc_segmentation.ctc_segmentation(
+            config, probs.numpy(), ground_truth_mat
+        )
+        segments = ctc_segmentation.determine_utterance_segments(
+            config, utt_begin_indices, char_probs, timings, words
+        )
+        return [
+            {"text": w, "start": p[0], "end": p[1], "conf": p[2]}
+            for w, p in zip(words, segments)
+        ]
+
+    def write_srt(self, srt_file_path: str, transcript_alignments: list[dict]):
+        from datetime import timedelta
+
+        for id, alignment in enumerate(transcript_alignments, start=1):
+            start_time = (
+                str(0) + str(timedelta(seconds=int(alignment["start"]))) + ",000"
+            )
+            end_time = str(0) + str(timedelta(seconds=int(alignment["end"]))) + ",000"
+            text = alignment["text"]
+
+            if not text:
+                continue
+
+            text = text[1:] if text[0] == " " else text
+            segment = f"{id}\n{start_time} --> {end_time}\n{text}\n\n"
+
+            with open(srt_file_path, "a", encoding="utf-8") as f:
+                f.write(segment)
+
+    def write_timestamp_srt(self, srt_file_path: str, word_timestamps: list[dict]):
+        for id, word_timestamp in enumerate(word_timestamps, start=1):
+            text = word_timestamp["text"]
+
+            if not text:
+                continue
+
+            text = text[1:] if text[0] == " " else text
+            segment = f"{id}\n{word_timestamp['start']:.2f} --> {word_timestamp['end']:.2f}\n{text}\n\n"
+
+            with open(srt_file_path, "a", encoding="utf-8") as f:
+                f.write(segment)
+
+    def write_timestamp_textgrid(
+        self,
+        textgrid_file_path: str,
+        word_timestamps: list[dict],
+        tier_name: str = "words",
+    ):
+        """word_timestamps 리스트를 TextGrid 형식으로 파일에 작성합니다."""
+
+        start_time = min(item["start"] for item in word_timestamps)
+        end_time = max(item["end"] for item in word_timestamps)
+
+        # TextGrid 헤더 작성
+        header = f"""File type = "ooTextFile"
+    Object class = "TextGrid"
+
+    xmin = {start_time:.6f}
+    xmax = {end_time:.6f}
+    tiers? <exists>
+    size = 1
+    item []:
+        item [1]:
+            class = "IntervalTier"
+            name = "{tier_name}"
+            xmin = {start_time:.2f}
+            xmax = {end_time:.2f}
+            intervals: size = {len(word_timestamps)}
+    """
+
+        # 각 간격(interval)에 대한 정보 작성
+        intervals = []
+        for i, word_timestamp in enumerate(word_timestamps, start=1):
+            text = word_timestamp["text"]
+            if text and text[0] == " ":
+                text = text[1:]
+
+            interval = f"""        intervals [{i}]:
+                xmin = {word_timestamp["start"]:.2f}
+                xmax = {word_timestamp["end"]:.2f}
+                text = "{text}"
+    """
+            intervals.append(interval)
+
+        # 전체 TextGrid 내용 조합
+        content = header + "".join(intervals)
+
+        # 파일에 작성
+        with open(textgrid_file_path, "w", encoding="utf-8") as f:
+            f.write(content)
 
 
 if __name__ == "__main__":
-    transcript = """
-        This is a pound of Jell-O, (gentle music) but this is 30,000 pounds of Jell-O.
-        And I made it 'cause ever since I was a kid, I've always wondered what it would look like to belly flop into the world's largest pool of Jell-O.
-        I started by digging a hole in my brother's backyard, but soon realized I needed a completely new way of making Jell-O for this to work, 'cause if I made it the normal way where you boil water on your stove, then mix in the powder, then refrigerate it for it to actually get firm, it would take 3,000 batches and three months to pull off.
-        So to scale things up, I took six 55-gallon drums with a custom welded spigot and a custom propane burner stand.
-        Then I filled each drum with water, gelatin powder, and red food coloring, and once it boiled, released it layer by layer into the pool every day for seven days.
-        Now, as for the refrigeration, I teamed up with Mother Nature, 'cause after studying the weather almanac for his city, I chose the exact three-week window in the year where the weather could cool the Jell-O to the perfect fridge temperature each night without freezing it.
-        It was so much freaking hard work to pull this off, but I was so stoked it finally worked, 'cause it turns out belly flopping on a Jell-O pool is actually way cooler than I'd always imagined.
-        """.strip().split('\n')
+    print("start")
+    full_text = read_text_files(text_file_path="audio/25min/S23.txt")
+    transcript = create_text_line(raw_text=full_text)
+
+    print("init")
     model = Wav2VecModel(transcript=transcript)
 
-    audio = model.load_audio(file_path="audio/voix_result_mp3.mp3")
+    print("load")
+    audio = model.load_audio(file_path="audio/25min/S23.mp3")
 
+    print("align")
     transcript_alignments = model.align_with_transcript(audio)
     print("트랜스크립트 정렬 결과:")
     for alignment in transcript_alignments:
         print(f"텍스트: {alignment['text']}")
         print(f"시작: {alignment['start']:.2f}초, 종료: {alignment['end']:.2f}초")
         print("---")
+
+    model.write_srt(
+        srt_file_path="audio/voix_ctc_25min_result.srt",
+        transcript_alignments=transcript_alignments,
+    )
+
+    # word_timestamps = model.get_word_timestamps(audio)
+    # for word_timestamp in word_timestamps:
+    #     print(f"텍스트: {word_timestamp['text']}")
+    #     print(f"시작: {word_timestamp['start']:.2f}초, 종료: {word_timestamp['end']:.2f}초")
+    #     print("---")
+
+    # model.write_timestamp_srt(
+    #     srt_file_path="audio/voix_ctc_timestamp.srt",
+    #     word_timestamps=word_timestamps,
+    # )
+    #
+    # model.write_timestamp_textgrid(
+    #     textgrid_file_path="audio/voix_ctc_s23_timestamp.textgrid",
+    #     word_timestamps=word_timestamps,
+    # )
