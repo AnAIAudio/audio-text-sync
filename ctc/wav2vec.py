@@ -186,6 +186,11 @@ class Wav2VecModel:
                 continue
 
             text = text[1:] if text[0] == " " else text
+            if word_timestamp["start"] > word_timestamp["end"]:
+                word_timestamp["start"], word_timestamp["end"] = (
+                    word_timestamp["end"],
+                    word_timestamp["start"],
+                )
             segment = f"{id}\n{word_timestamp['start']:.2f} --> {word_timestamp['end']:.2f}\n{text}\n\n"
 
             with open(srt_file_path, "a", encoding="utf-8") as f:
@@ -202,27 +207,30 @@ class Wav2VecModel:
         start_time = min(item["start"] for item in word_timestamps)
         end_time = max(item["end"] for item in word_timestamps)
 
+        if start_time > end_time:
+            start_time, end_time = end_time, start_time
+
         # TextGrid 헤더 작성
         header = f"""File type = "ooTextFile"
-    Object class = "TextGrid"
+Object class = "TextGrid"
 
-    xmin = {start_time:.6f}
-    xmax = {end_time:.6f}
-    tiers? <exists>
-    size = 1
-    item []:
-        item [1]:
-            class = "IntervalTier"
-            name = "{tier_name}"
-            xmin = {start_time:.2f}
-            xmax = {end_time:.2f}
-            intervals: size = {len(word_timestamps)}
-    """
+xmin = {start_time:.2f}
+xmax = {end_time:.2f}
+tiers? <exists>
+size = 1
+item []:
+    item [1]:
+        class = "IntervalTier"
+        name = "{tier_name}"
+        xmin = {start_time:.2f}
+        xmax = {end_time:.2f}
+        intervals: size = {len(word_timestamps)}
+"""
 
         # 각 간격(interval)에 대한 정보 작성
         intervals = []
         for i, word_timestamp in enumerate(word_timestamps, start=1):
-            text = word_timestamp["text"]
+            text = word_timestamp["text"].replace('"', "'")
             if text and text[0] == " ":
                 text = text[1:]
 
@@ -245,7 +253,7 @@ if __name__ == "__main__":
     print("cuda : ", torch.cuda.is_available())
 
     print("start")
-    text_path = os.path.join("audio", "25min", "S23.txt")
+    text_path = os.path.join("audio", "seperated_25min", "NH032", "NH032.txt")
     full_text = read_text_files(text_file_path=text_path)
     transcript = create_text_line(raw_text=full_text)
 
@@ -253,7 +261,7 @@ if __name__ == "__main__":
     model = Wav2VecModel(transcript=transcript)
 
     print("load")
-    audio_path = os.path.join("audio", "25min", "S23.mp3")
+    audio_path = os.path.join("audio", "seperated_25min", "NH032", "NH032.mp3")
     audio = model.load_audio(file_path=audio_path)
 
     print("align")
@@ -264,10 +272,11 @@ if __name__ == "__main__":
         print(f"시작: {alignment['start']:.2f}초, 종료: {alignment['end']:.2f}초")
         print("---")
 
-    model.write_srt(
-        srt_file_path="audio/voix_ctc_25min_result.srt",
-        transcript_alignments=transcript_alignments,
-    )
+
+    # model.write_srt(
+    #     srt_file_path=srt_file_path,
+    #     transcript_alignments=transcript_alignments,
+    # )
 
     # word_timestamps = model.get_word_timestamps(audio)
     # for word_timestamp in word_timestamps:
@@ -275,12 +284,14 @@ if __name__ == "__main__":
     #     print(f"시작: {word_timestamp['start']:.2f}초, 종료: {word_timestamp['end']:.2f}초")
     #     print("---")
 
-    # model.write_timestamp_srt(
-    #     srt_file_path="audio/voix_ctc_timestamp.srt",
-    #     word_timestamps=word_timestamps,
-    # )
-    #
-    # model.write_timestamp_textgrid(
-    #     textgrid_file_path="audio/voix_ctc_s23_timestamp.textgrid",
-    #     word_timestamps=word_timestamps,
-    # )
+    srt_file_path = os.path.join("audio", "seperated_25min", "NH032", "output", "wav2vec2-large-xlsr-53-english.srt")
+    model.write_timestamp_srt(
+        srt_file_path=srt_file_path,
+        word_timestamps=transcript_alignments,
+    )
+
+    textgrid_file_path = os.path.join("audio", "seperated_25min", "NH032", "output", "wav2vec2-large-xlsr-53-english.textgrid")
+    model.write_timestamp_textgrid(
+        textgrid_file_path=textgrid_file_path,
+        word_timestamps=transcript_alignments,
+    )
