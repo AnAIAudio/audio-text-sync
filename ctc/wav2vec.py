@@ -1,5 +1,5 @@
 import os
-
+import time
 import torch
 import numpy as np
 import ctc_segmentation
@@ -252,7 +252,9 @@ item []:
 if __name__ == "__main__":
     print("cuda : ", torch.cuda.is_available())
 
-    print("start")
+    start_time = time.time()
+    print("start time")
+
     text_path = os.path.join("audio", "seperated_25min", "NH032", "NH032.txt")
     full_text = read_text_files(text_file_path=text_path)
     transcript = create_text_line(raw_text=full_text)
@@ -306,3 +308,6 @@ if __name__ == "__main__":
         textgrid_file_path=textgrid_file_path,
         word_timestamps=transcript_alignments,
     )
+
+    end_time = time.time() - start_time
+    print("걸린 시간 : ", end_time)
