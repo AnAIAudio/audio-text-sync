@@ -254,12 +254,14 @@ if __name__ == "__main__":
 
     start_time = time.time()
     print("start time")
-    common_path = os.path.join("audio", "seperated_25min", "NH032")
+    # dir_name = "NH032"
+    dir_name = "S23"
+    common_path = os.path.join("audio", dir_name)
 
     if not os.path.exists(common_path):
         os.makedirs(common_path, exist_ok=True)
 
-    text_path = os.path.join(common_path, "NH032.txt")
+    text_path = os.path.join(common_path, f"{dir_name}.txt")
     full_text = read_text_files(text_file_path=text_path)
     transcript = create_text_line(raw_text=full_text)
 
@@ -267,7 +269,7 @@ if __name__ == "__main__":
     model = Wav2VecModel(transcript=transcript)
 
     print("load")
-    audio_path = os.path.join(common_path, "NH032.mp3")
+    audio_path = os.path.join(common_path, f"{dir_name}.mp3")
     audio = model.load_audio(file_path=audio_path)
 
     print("align")
