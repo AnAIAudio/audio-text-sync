@@ -1,5 +1,5 @@
 import os
-
+import time
 import torch
 import numpy as np
 import ctc_segmentation
@@ -252,8 +252,14 @@ item []:
 if __name__ == "__main__":
     print("cuda : ", torch.cuda.is_available())
 
-    print("start")
-    text_path = os.path.join("audio", "seperated_25min", "NH032", "NH032.txt")
+    start_time = time.time()
+    print("start time")
+    common_path = os.path.join("audio", "seperated_25min", "NH032")
+
+    if not os.path.exists(common_path):
+        os.makedirs(common_path, exist_ok=True)
+
+    text_path = os.path.join(common_path, "NH032.txt")
     full_text = read_text_files(text_file_path=text_path)
     transcript = create_text_line(raw_text=full_text)
 
@@ -261,7 +267,7 @@ if __name__ == "__main__":
     model = Wav2VecModel(transcript=transcript)
 
     print("load")
-    audio_path = os.path.join("audio", "seperated_25min", "NH032", "NH032.mp3")
+    audio_path = os.path.join(common_path, "NH032.mp3")
     audio = model.load_audio(file_path=audio_path)
 
     print("align")
@@ -271,7 +277,6 @@ if __name__ == "__main__":
         print(f"텍스트: {alignment['text']}")
         print(f"시작: {alignment['start']:.2f}초, 종료: {alignment['end']:.2f}초")
         print("---")
-
 
     # model.write_srt(
     #     srt_file_path=srt_file_path,
@@ -284,14 +289,23 @@ if __name__ == "__main__":
     #     print(f"시작: {word_timestamp['start']:.2f}초, 종료: {word_timestamp['end']:.2f}초")
     #     print("---")
 
-    srt_file_path = os.path.join("audio", "seperated_25min", "NH032", "output", "wav2vec2-large-xlsr-53-english.srt")
+    output_dir_path = os.path.join(common_path, "output")
+    if not os.path.exists(output_dir_path):
+        os.makedirs(output_dir_path, exist_ok=True)
+
+    srt_file_path = os.path.join(output_dir_path, "wav2vec2-large-xlsr-53-english.srt")
     model.write_timestamp_srt(
         srt_file_path=srt_file_path,
         word_timestamps=transcript_alignments,
     )
 
-    textgrid_file_path = os.path.join("audio", "seperated_25min", "NH032", "output", "wav2vec2-large-xlsr-53-english.textgrid")
+    textgrid_file_path = os.path.join(
+        output_dir_path, "wav2vec2-large-xlsr-53-english.textgrid"
+    )
     model.write_timestamp_textgrid(
         textgrid_file_path=textgrid_file_path,
         word_timestamps=transcript_alignments,
     )
+
+    end_time = time.time() - start_time
+    print("걸린 시간 : ", end_time)
