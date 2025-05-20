@@ -272,7 +272,6 @@ if __name__ == "__main__":
         print(f"시작: {alignment['start']:.2f}초, 종료: {alignment['end']:.2f}초")
         print("---")
 
-
     # model.write_srt(
     #     srt_file_path=srt_file_path,
     #     transcript_alignments=transcript_alignments,
@@ -284,13 +283,25 @@ if __name__ == "__main__":
     #     print(f"시작: {word_timestamp['start']:.2f}초, 종료: {word_timestamp['end']:.2f}초")
     #     print("---")
 
-    srt_file_path = os.path.join("audio", "seperated_25min", "NH032", "output", "wav2vec2-large-xlsr-53-english.srt")
+    srt_file_path = os.path.join(
+        "audio",
+        "seperated_25min",
+        "NH032",
+        "output",
+        "wav2vec2-large-xlsr-53-english.srt",
+    )
     model.write_timestamp_srt(
         srt_file_path=srt_file_path,
         word_timestamps=transcript_alignments,
     )
 
-    textgrid_file_path = os.path.join("audio", "seperated_25min", "NH032", "output", "wav2vec2-large-xlsr-53-english.textgrid")
+    textgrid_file_path = os.path.join(
+        "audio",
+        "seperated_25min",
+        "NH032",
+        "output",
+        "wav2vec2-large-xlsr-53-english.textgrid",
+    )
     model.write_timestamp_textgrid(
         textgrid_file_path=textgrid_file_path,
         word_timestamps=transcript_alignments,
