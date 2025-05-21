@@ -1,3 +1,2 @@
-beam: 100
-retry_beam: 400
-num_jobs: 12
+beam: 200
+retry_beam: 800
