@@ -4,6 +4,7 @@ from audio.cut_wave import (
     stt_using_whisper,
     segment_srt,
     write_file,
+    read_file, write_timestamp_textgrid, write_timestamp_srt,
 )
 from llm.agent import AgentModel
 from text.text_util import (
@@ -25,25 +26,27 @@ if __name__ == "__main__":
         json_file_path,
         text_file_path,
         srt_file_path,
+        textgrid_file_path,
         correct_srt_file_path,
         formatted,
     ) = test_file_paths(dataset_directory_path)
 
-    whisper_result = stt_using_whisper(audio_file_path=audio_file_path)
-    whisper_segments = whisper_result["segments"]
+    # whisper 을 통해 stt 결과 받아오는 부분
+    # whisper_result = stt_using_whisper(audio_file_path=audio_file_path)
+    # whisper_segments = whisper_result["segments"]
 
-    full_text = " ".join([segment["text"] for segment in whisper_segments])
-    text_list = create_text_line(raw_text=full_text)
+    # full_text = " ".join([segment["text"] for segment in whisper_segments])
+    # text_list = create_text_line(raw_text=full_text)
 
-    original_seq = SequentialPicker(items=text_list)
-    merged_segments = merge_segments(
-        segments=whisper_segments,
-        picker=original_seq,
-    )
-    write_file(
-        file_path=text_file_path,
-        text=" ".join([segment["text"] for segment in merged_segments]),
-    )
+    # original_seq = SequentialPicker(items=text_list)
+    # merged_segments = merge_segments(
+    #     segments=whisper_segments,
+    #     picker=original_seq,
+    # )
+    # write_file(
+    #     file_path=text_file_path,
+    #     text=" ".join([segment["text"] for segment in merged_segments]),
+    # )
 
     mfa.alignment.run(
         data_path=dataset_directory_path,
@@ -54,37 +57,28 @@ if __name__ == "__main__":
     )
 
     aligend_texts = read_json_files(json_file_path)
+    full_text = read_file(text_file_path)
+    text_list = create_text_line(full_text)
 
-    # MFA 에서 단어 단위로 잘라진 내용을 문장으로 만들기 위해 whisper 에서 반환한 text 를 이용( whisper 가 문장 분리를 잘 했다는 전제가 필요함 )
-    idx = 0  # MFA 인덱스
-    max_length = len(aligend_texts["tiers"]["words"]["entries"])
-    for segment in merged_segments:
-        text = segment["text"]
-        if aligend_texts["tiers"]["words"]["entries"][idx][2] in text:
-            segment["start"] = aligend_texts["tiers"]["words"]["entries"][idx][0]
-
-        while (
-            idx < max_length
-            and aligend_texts["tiers"]["words"]["entries"][idx][2] in text
-        ):
-            aligend_texts["tiers"]["words"]["entries"][idx][2] = text.replace(
-                aligend_texts["tiers"]["words"]["entries"][idx][2], "", 1
-            )
-            segment["end"] = aligend_texts["tiers"]["words"]["entries"][idx][1]
-            idx += 1
-
-    print(merged_segments)
-
-    segment_srt(
-        segments=whisper_segments,
+    merged_segments = mfa.alignment.merge(
+        aligned_texts=aligend_texts,
+        text_list=text_list,
+    )
+    write_timestamp_textgrid(
+        textgrid_file_path=textgrid_file_path,
+        word_timestamps=merged_segments,
+    )
+    write_timestamp_srt(
         srt_file_path=srt_file_path,
+        word_timestamps=merged_segments,
     )
 
-    agent = AgentModel()  # system_prompt, compare_system_prompt 여기서 변경 가능
-    agent.run(
-        srt_directory_path=srt_file_path,
-        formatted=formatted,
-        segments=merged_segments,
-        language="한국어",
-        seperate_number=50,
-    )
+    # Agent 을 이용해 번역하는 부분
+    # agent = AgentModel()  # system_prompt, compare_system_prompt 여기서 변경 가능
+    # agent.run(
+    #     srt_directory_path=srt_file_path,
+    #     formatted=formatted,
+    #     segments=merged_segments,
+    #     language="한국어",
+    #     seperate_number=50,
+    # )

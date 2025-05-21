@@ -28,6 +28,7 @@ def test_file_paths(datasets_directory_path: str):
     now = datetime.now()
     formatted = now.strftime("%Y%m%d%H%M%S")
     srt_file_path = os.path.join(datasets_directory_path, f"S23_{formatted}.srt")
+    textgrid_file_path = os.path.join(datasets_directory_path, f"S23_{formatted}.textgrid")
     correct_srt_file_path = os.path.join(
         datasets_directory_path, f"S23_{formatted}.srt"
     )
@@ -37,6 +38,7 @@ def test_file_paths(datasets_directory_path: str):
         json_file_path,
         text_file_path,
         srt_file_path,
+        textgrid_file_path,
         correct_srt_file_path,
         formatted,
     )
