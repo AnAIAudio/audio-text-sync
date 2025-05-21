@@ -53,7 +53,7 @@ def merge(aligned_texts: dict, text_list: list):
             segment["end"] = max(segment["end"], aligned_texts["tiers"]["words"]["entries"][idx][1])
             idx += 1
 
-        if segment["text"]:
+        if segment["text"] and segment['start'] != int(1e9) and segment['end'] != -1:
             merged_segments.append(segment)
 
     return merged_segments
