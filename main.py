@@ -4,7 +4,9 @@ from audio.cut_wave import (
     stt_using_whisper,
     segment_srt,
     write_file,
-    read_file, write_timestamp_textgrid, write_timestamp_srt,
+    read_file,
+    write_timestamp_textgrid,
+    write_timestamp_srt,
 )
 from llm.agent import AgentModel
 from text.text_util import (
@@ -20,7 +22,8 @@ from utils.prepare import (
 import mfa.alignment
 
 if __name__ == "__main__":
-    dataset_directory_path = prepare_directories()
+    filename = "NH032"
+    dataset_directory_path, mfa_directory_path = prepare_directories(filename)
     (
         audio_file_path,
         json_file_path,
@@ -28,8 +31,10 @@ if __name__ == "__main__":
         srt_file_path,
         textgrid_file_path,
         correct_srt_file_path,
+        mfa_acoustic_path,
+        mfa_dict_path,
         formatted,
-    ) = test_file_paths(dataset_directory_path)
+    ) = test_file_paths(dataset_directory_path, mfa_directory_path, filename)
 
     # whisper 을 통해 stt 결과 받아오는 부분
     # whisper_result = stt_using_whisper(audio_file_path=audio_file_path)
@@ -50,10 +55,9 @@ if __name__ == "__main__":
 
     mfa.alignment.run(
         data_path=dataset_directory_path,
-        dict_path="english_us_arpa",
-        acoustic_path="english_us_arpa",
+        dict_path=mfa_dict_path,
+        acoustic_path=mfa_acoustic_path,
         output_path=dataset_directory_path,
-        config_path=os.path.join("mfa", "config.yaml"),
     )
 
     aligend_texts = read_json_files(json_file_path)
@@ -61,7 +65,7 @@ if __name__ == "__main__":
     text_list = create_text_line(full_text)
 
     merged_segments = mfa.alignment.merge(
-        aligned_texts=aligend_texts,
+        aligned_texts=aligend_texts["tiers"]["words"]["entries"],
         text_list=text_list,
     )
     write_timestamp_textgrid(

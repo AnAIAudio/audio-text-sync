@@ -1,36 +1,48 @@
 import json
 
 
-def prepare_directories():
+def prepare_directories(filename: str):
     import os
     from custom_path import MAIN_BASE_PATH
 
-    dataset_directory_path = os.path.join(MAIN_BASE_PATH, "datasets", "S23")
+    dataset_directory_path = os.path.join(MAIN_BASE_PATH, "datasets", filename)
+    mfa_directory_path = os.path.join(MAIN_BASE_PATH, "mfa")
 
     path_list = [
         dataset_directory_path,
+        mfa_directory_path,
     ]
 
     for path in path_list:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
 
-    return dataset_directory_path
+    return (dataset_directory_path, mfa_directory_path)
 
 
-def test_file_paths(datasets_directory_path: str):
+def test_file_paths(
+    datasets_directory_path: str, mfa_directory_path: str, filename: str
+):
     import os
     from datetime import datetime
 
-    audio_file_path = os.path.join(datasets_directory_path, "S23.mp3")
-    json_file_path = os.path.join(datasets_directory_path, "S23.json")
-    text_file_path = os.path.join(datasets_directory_path, f"S23.txt")
+    audio_file_path = os.path.join(datasets_directory_path, f"{filename}.mp3")
+    json_file_path = os.path.join(datasets_directory_path, f"{filename}.json")
+    text_file_path = os.path.join(datasets_directory_path, f"{filename}.txt")
     now = datetime.now()
     formatted = now.strftime("%Y%m%d%H%M%S")
-    srt_file_path = os.path.join(datasets_directory_path, f"S23_{formatted}.srt")
-    textgrid_file_path = os.path.join(datasets_directory_path, f"S23_{formatted}.textgrid")
+    srt_file_path = os.path.join(datasets_directory_path, f"{filename}_{formatted}.srt")
+    textgrid_file_path = os.path.join(
+        datasets_directory_path, f"{filename}_{formatted}.textgrid"
+    )
     correct_srt_file_path = os.path.join(
-        datasets_directory_path, f"S23_{formatted}.srt"
+        datasets_directory_path, f"{filename}_{formatted}.srt"
+    )
+    mfa_acoustic_path = os.path.join(
+        mfa_directory_path, "acoustic", "english_us_arpa.zip"
+    )
+    mfa_dict_path = os.path.join(
+        mfa_directory_path, "dictionary", "english_us_arpa.dict"
     )
 
     return (
@@ -40,6 +52,8 @@ def test_file_paths(datasets_directory_path: str):
         srt_file_path,
         textgrid_file_path,
         correct_srt_file_path,
+        mfa_acoustic_path,
+        mfa_dict_path,
         formatted,
     )
 
