@@ -23,7 +23,8 @@ import mfa.alignment
 
 if __name__ == "__main__":
     filename = "NH032"
-    dataset_directory_path, mfa_directory_path = prepare_directories(filename)
+    mfa_model = "english_us_arpa"
+    dataset_directory_path = prepare_directories(filename)
     (
         audio_file_path,
         json_file_path,
@@ -31,10 +32,8 @@ if __name__ == "__main__":
         srt_file_path,
         textgrid_file_path,
         correct_srt_file_path,
-        mfa_acoustic_path,
-        mfa_dict_path,
         formatted,
-    ) = test_file_paths(dataset_directory_path, mfa_directory_path, filename)
+    ) = test_file_paths(dataset_directory_path, filename)
 
     # whisper 을 통해 stt 결과 받아오는 부분
     # whisper_result = stt_using_whisper(audio_file_path=audio_file_path)
@@ -52,11 +51,26 @@ if __name__ == "__main__":
     #     file_path=text_file_path,
     #     text=" ".join([segment["text"] for segment in merged_segments]),
     # )
+    return_code = mfa.alignment.check(model_type="dictionary", model=mfa_model)
+    if return_code != 0:
+        mfa.alignment.install(
+            model_type="dictionary",
+            model=mfa_model,
+        )
+
+    return_code = mfa.alignment.check(
+        model_type="acoustic",
+        model=mfa_model,
+    )
+    if return_code != 0:
+        mfa.alignment.install(
+            model_type="acoustic",
+            model=mfa_model,
+        )
 
     mfa.alignment.run(
         data_path=dataset_directory_path,
-        dict_path=mfa_dict_path,
-        acoustic_path=mfa_acoustic_path,
+        mfa_model=mfa_model,
         output_path=dataset_directory_path,
     )
 

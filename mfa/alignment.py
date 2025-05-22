@@ -1,10 +1,46 @@
+import os
 import subprocess
+
+
+def check(
+    model_type: str,
+    model: str,
+):
+    try:
+        result = subprocess.run(
+            ["mfa", "model", "inspect", model_type, model],
+            check=True,
+        )
+        return result.returncode
+
+    except subprocess.CalledProcessError as e:
+        return e.returncode
+
+
+def install(
+    model_type: str,
+    model: str,
+):
+    try:
+        result = subprocess.run(
+            [
+                "mfa",
+                "model",
+                "download",
+                model_type,
+                model,
+            ],
+            check=True,
+        )
+        return result.returncode
+
+    except subprocess.CalledProcessError as e:
+        return e.returncode
 
 
 def run(
     data_path: str,
-    dict_path: str,
-    acoustic_path: str,
+    mfa_model: str,
     output_path: str,
 ):
     try:
@@ -13,8 +49,8 @@ def run(
                 "mfa",
                 "align",
                 data_path,
-                dict_path,
-                acoustic_path,
+                mfa_model,
+                mfa_model,
                 output_path,
                 "--output_format",
                 "json",
