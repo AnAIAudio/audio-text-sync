@@ -53,6 +53,21 @@ def stt_using_whisper(audio_file_path: str = None, target_lang: str = "en"):
     return transcribe_result
 
 
+def format_to_srt_time(timestamp):
+    """
+    초 단위의 시간을 SRT 포맷(HH:MM:SS,mmm)으로 변환합니다.
+
+    :param timestamp: 초 단위의 시간(float)
+    :return: SRT 형식의 시간 문자열
+    """
+    milliseconds = int(timestamp * 1000)
+    hours = milliseconds // (1000 * 60 * 60)
+    minutes = (milliseconds % (1000 * 60 * 60)) // (1000 * 60)
+    seconds = (milliseconds % (1000 * 60)) // 1000
+    milliseconds = milliseconds % 1000
+    return f"{hours:02}:{minutes:02}:{seconds:02},{milliseconds:03}"
+
+
 def segment_srt(segments: List[Segment], srt_file_path: str):
     from datetime import timedelta
 
@@ -86,7 +101,7 @@ def write_timestamp_srt(srt_file_path: str, word_timestamps: list[dict]):
                 word_timestamp["end"],
                 word_timestamp["start"],
             )
-        segment = f"{id}\n{word_timestamp['start']:.2f} --> {word_timestamp['end']:.2f}\n{text}\n\n"
+        segment = f"{id}\n{format_to_srt_time(word_timestamp['start'])} --> {format_to_srt_time(word_timestamp['end'])}\n{text}\n\n"
 
         with open(srt_file_path, "a", encoding="utf-8") as f:
             f.write(segment)
