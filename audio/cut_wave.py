@@ -15,8 +15,8 @@ def load_whisper_model() -> Whisper:
     """
     import whisper
 
-    model_name = "large-v3"
-    # model_name = "medium"
+    # model_name = "large-v3"
+    model_name = "medium"
 
     available_model_list = whisper.available_models()
 
@@ -53,6 +53,21 @@ def stt_using_whisper(audio_file_path: str = None, target_lang: str = "en"):
     return transcribe_result
 
 
+def format_to_srt_time(timestamp):
+    """
+    초 단위의 시간을 SRT 포맷(HH:MM:SS,mmm)으로 변환합니다.
+
+    :param timestamp: 초 단위의 시간(float)
+    :return: SRT 형식의 시간 문자열
+    """
+    milliseconds = int(timestamp * 1000)
+    hours = milliseconds // (1000 * 60 * 60)
+    minutes = (milliseconds % (1000 * 60 * 60)) // (1000 * 60)
+    seconds = (milliseconds % (1000 * 60)) // 1000
+    milliseconds = milliseconds % 1000
+    return f"{hours:02}:{minutes:02}:{seconds:02},{milliseconds:03}"
+
+
 def segment_srt(segments: List[Segment], srt_file_path: str):
     from datetime import timedelta
 
@@ -73,11 +88,82 @@ def segment_srt(segments: List[Segment], srt_file_path: str):
             f.write(segment)
 
 
-def read_srt(srt_file_path: str) -> str:
-    with open(srt_file_path, "r", encoding="utf-8") as f:
+def write_timestamp_srt(srt_file_path: str, word_timestamps: list[dict]):
+    for id, word_timestamp in enumerate(word_timestamps, start=1):
+        text = word_timestamp["text"]
+
+        if not text:
+            continue
+
+        text = text[1:] if text[0] == " " else text
+        if word_timestamp["start"] > word_timestamp["end"]:
+            word_timestamp["start"], word_timestamp["end"] = (
+                word_timestamp["end"],
+                word_timestamp["start"],
+            )
+        segment = f"{id}\n{format_to_srt_time(word_timestamp['start'])} --> {format_to_srt_time(word_timestamp['end'])}\n{text}\n\n"
+
+        with open(srt_file_path, "a", encoding="utf-8") as f:
+            f.write(segment)
+
+
+def write_timestamp_textgrid(
+    textgrid_file_path: str,
+    word_timestamps: list[dict],
+    tier_name: str = "words",
+):
+    """word_timestamps 리스트를 TextGrid 형식으로 파일에 작성합니다."""
+
+    start_time = min(item["start"] for item in word_timestamps)
+    end_time = max(item["end"] for item in word_timestamps)
+
+    if start_time > end_time:
+        start_time, end_time = end_time, start_time
+
+    # TextGrid 헤더 작성
+    header = f"""File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = {start_time:.2f}
+xmax = {end_time:.2f}
+tiers? <exists>
+size = 1
+item []:
+item [1]:
+    class = "IntervalTier"
+    name = "{tier_name}"
+    xmin = {start_time:.2f}
+    xmax = {end_time:.2f}
+    intervals: size = {len(word_timestamps)}
+"""
+
+    # 각 간격(interval)에 대한 정보 작성
+    intervals = []
+    for i, word_timestamp in enumerate(word_timestamps, start=1):
+        text = word_timestamp["text"].replace('"', "'")
+        if text and text[0] == " ":
+            text = text[1:]
+
+        interval = f"""        intervals [{i}]:
+            xmin = {word_timestamp["start"]:.2f}
+            xmax = {word_timestamp["end"]:.2f}
+            text = "{text}"
+"""
+        intervals.append(interval)
+
+    # 전체 TextGrid 내용 조합
+    content = header + "".join(intervals)
+
+    # 파일에 작성
+    with open(textgrid_file_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
+def read_file(file_path: str) -> str:
+    with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
 
-def write_srt(srt_file_path: str, text: str):
-    with open(srt_file_path, "w", encoding="utf-8") as f:
+def write_file(file_path: str, text: str):
+    with open(file_path, "a", encoding="utf-8") as f:
         f.write(text)
